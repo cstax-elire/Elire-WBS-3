@@ -37,7 +37,7 @@ Notes:
 - Some files may have been excluded based on .gitignore rules and Repomix's configuration
 - Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
 - Only files matching these patterns are included: **/*.sql, **/*.md, rosetta-console/app/**, rosetta-console/components/**, rosetta-console/lib/**, rosetta-console/public/**, rosetta-console/*.js, rosetta-console/*.ts, rosetta-console/*.json, rosetta-console/.env.example, elire_ops_1/**/*.sql, background/**/*.md, *.md
-- Files matching these patterns are excluded: **/node_modules/**, **/.next/**, **/out/**, **/.env.local, **/.env, **/package-lock.json, **/.DS_Store, **/repomix-output.txt, **/repomix-output.md, **/*.log, **/.git/**, **/dist/**, **/build/**, **/ps-maturity-benchmark-2024.md, **/UI*.*, rosetta-console/
+- Files matching these patterns are excluded: **/node_modules/**, **/.next/**, **/out/**, **/.env.local, **/.env, **/package-lock.json, **/.DS_Store, **/repomix-output.txt, **/repomix-output.md, **/*.log, **/.git/**, **/dist/**, **/build/**, **/ps-maturity-benchmark-2024.md
 - Files matching patterns in .gitignore are excluded
 - Files matching default ignore patterns are excluded
 
@@ -59,6 +59,7 @@ background/
   The AI Lens- From Organizational Chaos to AI-Ready Excellence.md
 elire_ops_1/
   1-tables_and_types.sql
+  10-ui-helpers-sql.sql
   2-seed.sql
   3-value_streams_systems_attribution.sql
   4-kpis_and_targets.sql
@@ -68,7 +69,80 @@ elire_ops_1/
   8-updates.sql
   9-evidence-view.sql
   DesignDecisions.md
+rosetta-console/
+  app/
+    api/
+      observed-ownership/
+        route.ts
+      options/
+        [type]/
+          route.ts
+      streams/
+        route.ts
+      summary/
+        ownership/
+          route.ts
+      truth/
+        paginated/
+          route.ts
+    evidence/
+      page.tsx
+    finance/
+      page.tsx
+    kpis/
+      page.tsx
+    org/
+      page.tsx
+    stream/
+      [code]/
+        page.tsx
+    streams/
+      page.tsx
+    truth/
+      page.tsx
+    globals.css
+    layout-old.tsx
+    layout.tsx
+    page.tsx
+  components/
+    ui/
+      alert.tsx
+      badge.tsx
+      button.tsx
+      card.tsx
+      index.ts
+      InlineEdit.tsx
+      select.tsx
+      skeleton.tsx
+      StatusBadge.tsx
+      Tabs.tsx
+      Tooltip.tsx
+    ComingSoon.tsx
+    DataTablePagination.tsx
+    ErrorBoundary.tsx
+    OwnershipSummary.tsx
+    Providers.tsx
+    StatusChip.tsx
+    StreamDetailView.tsx
+    StreamGrid.tsx
+    StreamOutcomes.tsx
+    TruthTableV4.tsx
+  lib/
+    db.ts
+    queryClient.ts
+    utils.ts
+  .env.example
+  components.json
+  next.config.js
+  package.json
+  postcss.config.js
+  README.md
+  tailwind.config.ts
+  tsconfig.json
+UI-Design/
+  ui-spec-v4.md
 CLAUDE.md
+Insights.md
 README.md
 
 ================================================================
@@ -2287,72 +2361,7 @@ Client Relationships has 3 main departments -  Sales, Marketing, and Proposal ma
 
 
 
-## 4. Pillar Metrics
-
-
-
----
-
-### 2025 Q1 Pillar Metrics Update  
-
----
-
-#### 1. Client Relationships – Key Metrics  
-
-| Metric                                           | 2025 Goal               | Q2 2024 | Q3 2024 | Q4 2024 | Q1 2025 | Strategic Initiatives                         | Reflections                                                  |
-| ------------------------------------------------ | ----------------------- | ------- | ------- | ------- | ------- | --------------------------------------------- | ------------------------------------------------------------ |
-| Deal Pipeline Relative to Qtr. Bookings Forecast | $125M Rolling 4 Quarter | $103M   | $130M   | $100M   | $109M   | Accountability, Sales and Marketing Alignment | Current Pipeline 2025 $90M, total pipeline $118M. Q1 Closed 54 Deals for $8.63M |
-| SOW Closed Deals                                 | $45M                    | $8.1M   | $17.6M  | $11.9M  | $8.63M  | Accountability, Sales and Marketing Alignment | Goal was $9.03M; slightly behind. Billing on 2 unsigned SOWs. |
-| BDR Generated Sales Opportunities                | —                       | 19/2    | 26/3    | 13/3    | 9/1     | BDR Training, Hiring, Oracle Meetings         | 9 created ($1.5M). Won 1 deal ($230K).                       |
-| RFP Win Rate (incl. Down Selection)              | —                       | 13/11   | 13/2    | 12/4    | 20/1    | —                                             | 35 Open RFPs for $27M. RFP resource replaced (Pam → Tim).    |
-| Managed Services – % of Won Deals                | —                       | 5%      | 14%     | 16%     | 9%      | Managed Services                              | 5 of 54 deals were MS ($1.5M).                               |
-| Marketing Generated Pipeline                     | —                       | $3.3M   | $2.5M   | $3.7M   | $3.4M   | Expand Marketing HubSpot                      | Marketing Pipeline $7.4M                                     |
-| Inbound Web Leads                                | —                       | —       | —       | —       | 6       | —                                             | New to 2025                                                  |
-
----
-
-#### 2. Service Execution – Key Metrics  
-
-| Metric                                         | 2025 Goal | Q2 2024           | Q3 2024           | Q4 2024                    | Q1 2025           | Strategic Initiatives | Reflections                                                  |
-| ---------------------------------------------- | --------- | ----------------- | ----------------- | -------------------------- | ----------------- | --------------------- | ------------------------------------------------------------ |
-| Path to Cloud Cumulative Pipeline              | $70–80M   | $66M              | $101M             | $79M*                      | N/A               | PSFT to Cloud         | Replacing metrics in 2025                                    |
-| # Clients w/ Targeted Strategic Sales Approach | TBD       | N/A               | N/A               | N/A                        | TBD               | PSFT to Cloud         | New metric for 2025; team meeting to set goals.              |
-| Sales Generated by Above Efforts               | TBD       | N/A               | N/A               | N/A                        | TBD               | PSFT to Cloud         | New metric for 2025; sales to be determined.                 |
-| Federal Client SOW Sales                       | $3–5M     | $0                | $4.38M            | $4.38M                     | $570K             | Federal               | Q1 closed: U.S. Treasury – PSFT 9.2 T&L / Absence Mgmt. For 2025: Total pipeline $10.4M; value $2.2M. |
-| PSA Customer Satisfaction (Survey)             | 81–100%   | Measured annually | Measured annually | 75% use; 88% view accurate | Measured annually | PMO                   | Working on prioritized initiatives for 2025.                 |
-| Client Satisfaction Survey                     | —         | —                 | —                 | —                          | —                 | —                     | New metric in 2025                                           |
-
----
-
-#### 3. Finance & Operations – Key Metrics  
-
-| Metric                                            | 2025 Goal                   | Q2 2024     | Q3 2024     | Q4 2024     | Q1 2025     | Strategic Initiatives                                        | Reflections / Actions                                        |
-| ------------------------------------------------- | --------------------------- | ----------- | ----------- | ----------- | ----------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| Annual Consulting Revenue per Billable Consultant | $320K; 1.5 min rev. to cost | $295K (1.2) | $300K (1.2) | $314K (1.3) | $319K (1.3) | —                                                            | Revenues increased in Q1 due to higher utilization.          |
-| Annual Consulting Revenue per Employee            | $265K                       | $243K       | $242K       | $264K       | $279K       | —                                                            | Same driver as above.                                        |
-| Revenue Leakage                                   | —                           | $27K        | $200K       | $241K       | $168K       | —                                                            | $11K Sales discount for SRNL; rest nonbillable hours (Waste Mgmt, SRNL, INL). |
-| Days to Invoice                                   | 5                           | 9           | 10          | 11          | 9           | Integrated Project Billing & Approvals; streamline invoicing | First decrease in a long time; new expense policy reduced cycle (April = 4 days). |
-| Hours to Produce Financials                       | 4–8 hrs                     | 7           | 6           | 8           | 7           | Improve & Develop Financial Reporting & Analytics            | New templates, added Cloud Tech + EGSH, Near/Offshore DIMs made reporting complex. |
-| Invoice Rework                                    | 3%                          | 14%         | 13%         | 12%         | 10%         | Integrated Project Billing & Approvals; Validate Billing Info | To be tracked again in 2025.                                 |
-
----
-
-#### 4. Talent – Key Metrics  
-
-| Metric                                      | 2025 Goal                       | Q2 2024               | Q3 2024               | Q4 2024                | Q1 2025               | Strategic Initiatives                         | Reflections                                                  |
-| ------------------------------------------- | ------------------------------- | --------------------- | --------------------- | ---------------------- | --------------------- | --------------------------------------------- | ------------------------------------------------------------ |
-| Employee Satisfaction                       | 80%                             | —                     | —                     | 78.79%                 | —                     | Project-Based Reviews, W2 Compensation Review | Q4-only metric.                                              |
-| Total Employee Attrition YTD                | Voluntary <15%, Involuntary <6% | 7.37% Vol / 1.05% Inv | 8.89% Vol / 1.98% Inv | 11.76% Vol / 2.94% Inv | 3.08% Vol / 2.05% Inv | Project-Based Reviews, W2 Compensation Review | 3 voluntary resignations (Karen, Sharon, Kendal). Reviewed salary bands; raised consultant pay recommendations. |
-| Days to Recruit & Hire (Standard Positions) | 50 days                         | 29                    | 20                    | 21.83                  | 34                    | —                                             | Q1 slow; many hires in India not yet included.               |
-| % of Employees Billable                     | 71.5%                           | 62.89%                | 63.27%                | 67.3%                  | 67.3%                 | W2 Compensation Review                        | Major drag on profit. Need to grow W2 billable consultants. Proposed restructure plan to improve. |
-
----
-
-
-
-
-
-## 5. 2025 Annual Budget
+## 4. 2025 Annual Budget
 
 ### Summary
 
@@ -2988,6 +2997,337 @@ CREATE TABLE person_fact (
 -- ==============================
 -- Views (to be defined after seeds)
 -- ==============================
+
+================
+File: elire_ops_1/10-ui-helpers-sql.sql
+================
+-- ======================================================================
+-- 10-ui-helpers.sql: UI Support Views and Missing Role Fixes
+-- ======================================================================
+
+BEGIN;
+
+-- ======================================================================
+-- SECTION A: Add Missing Roles Referenced in Expected Ownership
+-- ======================================================================
+
+-- Add roles that are referenced but don't exist
+INSERT INTO org_role (code, name) VALUES
+('COO', 'Chief Operating Officer'),
+('CFO', 'Chief Financial Officer'),
+('CONTROLLER', 'Controller'),
+('RESOURCE_MGR', 'Resource Manager')
+ON CONFLICT (code) DO NOTHING;
+
+-- ======================================================================
+-- SECTION B: Create UI Helper Views for Dropdowns
+-- ======================================================================
+
+-- Role options for dropdowns
+CREATE OR REPLACE VIEW v_role_options AS
+SELECT 
+  role_id as value,
+  code || ': ' || name as label,
+  code,
+  name
+FROM org_role
+ORDER BY 
+  CASE 
+    WHEN code LIKE 'CO_%' THEN 1
+    WHEN code LIKE '%_DIR' THEN 2
+    WHEN code LIKE '%_LEAD' THEN 3
+    WHEN code = 'PARTNER' THEN 4
+    ELSE 5
+  END,
+  name;
+
+-- Org options with hierarchical path
+CREATE OR REPLACE VIEW v_org_options AS
+WITH RECURSIVE org_path AS (
+  SELECT 
+    org_unit_id,
+    code,
+    name,
+    parent_id,
+    name::text as path,
+    0 as depth
+  FROM org_unit
+  WHERE parent_id IS NULL
+  
+  UNION ALL
+  
+  SELECT 
+    o.org_unit_id,
+    o.code,
+    o.name,
+    o.parent_id,
+    op.path || ' > ' || o.name,
+    op.depth + 1
+  FROM org_unit o
+  JOIN org_path op ON op.org_unit_id = o.parent_id
+)
+SELECT 
+  org_unit_id as value,
+  CASE 
+    WHEN depth = 0 THEN name
+    ELSE repeat('  ', depth) || '└─ ' || name
+  END as label,
+  path,
+  code,
+  depth
+FROM org_path
+ORDER BY path;
+
+-- Stream options for filters
+CREATE OR REPLACE VIEW v_stream_options AS
+SELECT 
+  stream_id as value,
+  CASE 
+    WHEN parent_id IS NULL THEN name
+    ELSE '  └─ ' || name
+  END as label,
+  code,
+  is_enabler,
+  order_in_parent
+FROM stream
+ORDER BY 
+  CASE WHEN parent_id IS NULL THEN order_in_parent ELSE 999 END,
+  order_in_parent;
+
+-- ======================================================================
+-- SECTION C: Performance Indexes for UI Queries
+-- ======================================================================
+
+-- Critical indexes for UI performance
+CREATE INDEX IF NOT EXISTS idx_observed_latest 
+  ON unit_observed_ownership(unit_id, observed_as_of DESC);
+  
+CREATE INDEX IF NOT EXISTS idx_evidence_composite 
+  ON evidence_log(unit_id, evidence_type, occurred_at DESC);
+  
+CREATE INDEX IF NOT EXISTS idx_kpi_measurement_latest
+  ON kpi_measurement(kpi_id, measured_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_person_org
+  ON person(org_unit_id);
+
+CREATE INDEX IF NOT EXISTS idx_unit_stream
+  ON atomic_unit(stream_id);
+
+-- ======================================================================
+-- SECTION D: Create Paginated Truth View for Performance
+-- ======================================================================
+
+-- Function to get paginated truth data
+CREATE OR REPLACE FUNCTION get_rosetta_truth_page(
+  page_size INT DEFAULT 50,
+  page_offset INT DEFAULT 0,
+  filter_stream TEXT DEFAULT NULL,
+  filter_status TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+  unit_code TEXT,
+  unit_name TEXT,
+  stream_code TEXT,
+  expected_role TEXT,
+  expected_org TEXT,
+  observed_role TEXT,
+  observed_org TEXT,
+  status TEXT,
+  evidence_count BIGINT,
+  last_evidence_at TIMESTAMPTZ,
+  total_count BIGINT
+) AS $$
+BEGIN
+  RETURN QUERY
+  WITH filtered_data AS (
+    SELECT * FROM v_rosetta_truth
+    WHERE 
+      (filter_stream IS NULL OR stream_code = filter_stream)
+      AND (filter_status IS NULL OR 
+           CASE 
+             WHEN filter_status = 'Misattributed' THEN status IN ('Role Mismatch', 'Org Mismatch')
+             ELSE status = filter_status
+           END)
+  ),
+  counted AS (
+    SELECT *, COUNT(*) OVER() as total
+    FROM filtered_data
+  )
+  SELECT 
+    c.unit_code,
+    c.unit_name,
+    c.stream_code,
+    c.expected_role,
+    c.expected_org,
+    c.observed_role,
+    c.observed_org,
+    c.status,
+    c.evidence_count,
+    c.last_evidence_at,
+    c.total
+  FROM counted c
+  ORDER BY c.stream_code, c.unit_code
+  LIMIT page_size
+  OFFSET page_offset;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ======================================================================
+-- SECTION E: Create Summary Statistics View
+-- ======================================================================
+
+CREATE OR REPLACE VIEW v_ownership_summary AS
+WITH status_counts AS (
+  SELECT 
+    stream_code,
+    COUNT(*) as total_units,
+    COUNT(*) FILTER (WHERE status = 'Aligned') as aligned_count,
+    COUNT(*) FILTER (WHERE status IN ('Role Mismatch', 'Org Mismatch')) as misattributed_count,
+    COUNT(*) FILTER (WHERE status = 'Not Observed') as not_observed_count
+  FROM v_rosetta_truth
+  GROUP BY stream_code
+)
+SELECT 
+  s.code as stream,
+  s.name as stream_name,
+  COALESCE(sc.total_units, 0) as total_units,
+  COALESCE(sc.aligned_count, 0) as aligned,
+  COALESCE(sc.misattributed_count, 0) as misattributed,
+  COALESCE(sc.not_observed_count, 0) as not_observed,
+  CASE 
+    WHEN COALESCE(sc.total_units, 0) > 0 
+    THEN ROUND(100.0 * sc.aligned_count / sc.total_units, 1)
+    ELSE 0 
+  END as alignment_pct
+FROM stream s
+LEFT JOIN status_counts sc ON sc.stream_code = s.code
+WHERE s.parent_id IS NULL
+ORDER BY s.order_in_parent;
+
+-- ======================================================================
+-- SECTION F: Fix NULL Handling in Misattribution Delta
+-- ======================================================================
+
+CREATE OR REPLACE VIEW v_misattribution_delta AS
+WITH latest_observed AS (
+  SELECT DISTINCT ON (unit_id)
+    unit_id,
+    accountable_role_id AS obs_role_id,
+    accountable_org_unit_id AS obs_org_id,
+    observed_as_of,
+    source,
+    confidence_pct
+  FROM unit_observed_ownership
+  ORDER BY unit_id, observed_as_of DESC
+)
+SELECT
+  s.code AS stream,
+  ps.code AS parent_stream,
+  au.code AS unit_code,
+  au.name AS unit_name,
+  
+  -- Expected ownership (handle NULLs)
+  COALESCE(exp_role.code, 'UNDEFINED') AS expected_role,
+  COALESCE(exp_org.code, 'UNDEFINED') AS expected_org,
+  
+  -- Observed ownership (handle NULLs)
+  COALESCE(obs_role.code, 'NOT_SET') AS observed_role,
+  COALESCE(obs_org.code, 'NOT_SET') AS observed_org,
+  
+  -- Misattribution flags
+  CASE 
+    WHEN lo.unit_id IS NULL THEN 'Not Observed'
+    WHEN ueo.accountable_role_id IS NULL OR ueo.accountable_org_unit_id IS NULL THEN 'Incomplete Expected'
+    WHEN exp_role.code IS DISTINCT FROM obs_role.code THEN 'Role Mismatch'
+    WHEN exp_org.code IS DISTINCT FROM obs_org.code THEN 'Org Mismatch'
+    ELSE 'Aligned'
+  END AS attribution_status,
+  
+  CASE
+    WHEN lo.unit_id IS NOT NULL AND 
+         (exp_role.code IS DISTINCT FROM obs_role.code OR 
+          exp_org.code IS DISTINCT FROM obs_org.code) 
+    THEN true
+    ELSE false
+  END AS is_misattributed,
+  
+  lo.observed_as_of,
+  lo.source AS observation_source,
+  lo.confidence_pct
+  
+FROM atomic_unit au
+JOIN stream s ON s.stream_id = au.stream_id
+LEFT JOIN stream ps ON ps.stream_id = s.parent_id
+LEFT JOIN unit_expected_ownership ueo ON ueo.unit_id = au.unit_id
+LEFT JOIN org_role exp_role ON exp_role.role_id = ueo.accountable_role_id
+LEFT JOIN org_unit exp_org ON exp_org.org_unit_id = ueo.accountable_org_unit_id
+LEFT JOIN latest_observed lo ON lo.unit_id = au.unit_id
+LEFT JOIN org_role obs_role ON obs_role.role_id = lo.obs_role_id
+LEFT JOIN org_unit obs_org ON obs_org.org_unit_id = lo.obs_org_id
+ORDER BY 
+  COALESCE(ps.code, s.code),
+  s.code,
+  au.order_in_stream;
+
+-- ======================================================================
+-- SECTION G: Create Evidence Type Enum and Constraints
+-- ======================================================================
+
+-- Create evidence type constraint
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint 
+    WHERE conname = 'evidence_type_check'
+  ) THEN
+    ALTER TABLE evidence_log 
+    ADD CONSTRAINT evidence_type_check 
+    CHECK (evidence_type IN (
+      'ownership_update',
+      'kpi_measurement', 
+      'pricing_decision',
+      'solution_outline',
+      'proposal_redline',
+      'recruit_req',
+      'scope_change',
+      'milestone_complete',
+      'invoice_adjustment'
+    ));
+  END IF;
+END$$;
+
+-- ======================================================================
+-- SECTION H: Validation Summary
+-- ======================================================================
+
+CREATE OR REPLACE VIEW v_ui_validation AS
+SELECT 'UI Helper Views Validation' as check_name
+UNION ALL
+SELECT '------------------------'
+UNION ALL
+SELECT 'Role options available: ' || COUNT(*)::text FROM v_role_options
+UNION ALL
+SELECT 'Org options available: ' || COUNT(*)::text FROM v_org_options
+UNION ALL
+SELECT 'Stream options available: ' || COUNT(*)::text FROM v_stream_options
+UNION ALL
+SELECT 'Missing roles fixed: ' || COUNT(*)::text 
+FROM org_role WHERE code IN ('COO', 'CFO', 'CONTROLLER', 'RESOURCE_MGR')
+UNION ALL
+SELECT 'Ownership summary streams: ' || COUNT(*)::text FROM v_ownership_summary
+UNION ALL
+SELECT 'Total units tracked: ' || COUNT(*)::text FROM atomic_unit
+UNION ALL
+SELECT 'Units with expected ownership: ' || COUNT(*)::text FROM unit_expected_ownership
+UNION ALL
+SELECT 'Units with observed ownership: ' || COUNT(*)::text 
+FROM (SELECT DISTINCT unit_id FROM unit_observed_ownership) x;
+
+COMMIT;
+
+-- Run validation
+SELECT * FROM v_ui_validation;
 
 ================
 File: elire_ops_1/2-seed.sql
@@ -5256,6 +5596,4182 @@ Each **atomic unit** (e.g., “WIN-03 Pricing & Margin Decision”) carries:
 This design deliberately **does not overcomplicate the schema**, but it **does** encode the critical connections you asked for so that **trees, rollups, and attribution** appear naturally once you start editing observed ownership and loading actuals. It is purpose-built to **prove** the story you’ve been telling: *who really owns the work, how that affects outcomes and dollars, and where to move accountability so leadership is measured by ends and controllable drivers—not by surveys or anecdotes.*
 
 ================
+File: rosetta-console/app/api/observed-ownership/route.ts
+================
+import { NextResponse } from 'next/server';
+import { withTransaction, validateForeignKey } from '@/lib/db';
+import { ObservedOwnershipRequest } from '@/types/database';
+import { z } from 'zod';
+
+// Schema validation for request body
+const observedOwnershipSchema = z.object({
+  unit_id: z.number(),
+  accountable_role_id: z.number().nullable().optional(),
+  accountable_org_unit_id: z.number().nullable().optional(),
+  source: z.string().optional().default('UI'),
+  confidence_pct: z.number().min(0).max(1).optional().default(1.0),
+  notes: z.string().optional()
+});
+
+// Enhanced API implementation from v4 spec lines 493-605
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    
+    // Validate request body
+    const validationResult = observedOwnershipSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid request data', details: validationResult.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const data = validationResult.data;
+
+    // Use transaction for atomicity
+    const result = await withTransaction(async (client) => {
+      // 1. Validate unit exists
+      const unitExists = await validateForeignKey(
+        'atomic_unit',
+        'unit_id',
+        data.unit_id,
+        client
+      );
+      
+      if (!unitExists) {
+        throw new Error(`Invalid unit_id: ${data.unit_id}`);
+      }
+
+      // 2. Validate role if provided
+      if (data.accountable_role_id) {
+        const roleExists = await validateForeignKey(
+          'org_role',
+          'role_id',
+          data.accountable_role_id,
+          client
+        );
+        
+        if (!roleExists) {
+          throw new Error(`Invalid role_id: ${data.accountable_role_id}`);
+        }
+      }
+
+      // 3. Validate org if provided
+      if (data.accountable_org_unit_id) {
+        const orgExists = await validateForeignKey(
+          'org_unit',
+          'org_unit_id',
+          data.accountable_org_unit_id,
+          client
+        );
+        
+        if (!orgExists) {
+          throw new Error(`Invalid org_unit_id: ${data.accountable_org_unit_id}`);
+        }
+      }
+
+      // 4. Insert ownership (append-only)
+      const insertResult = await client.query(
+        `INSERT INTO unit_observed_ownership 
+         (unit_id, observed_as_of, accountable_role_id, 
+          accountable_org_unit_id, source, confidence_pct, notes)
+         VALUES ($1, NOW(), $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [
+          data.unit_id,
+          data.accountable_role_id || null,
+          data.accountable_org_unit_id || null,
+          data.source,
+          data.confidence_pct,
+          data.notes || null
+        ]
+      );
+
+      // 5. Log evidence
+      await client.query(
+        `INSERT INTO evidence_log 
+         (unit_id, subject_ref, evidence_type, system_ref, occurred_at, notes)
+         VALUES ($1, $2, $3, $4, NOW(), $5)`,
+        [
+          data.unit_id,
+          `OBS_${insertResult.rows[0].obs_id}`,
+          'ownership_update',
+          'UI',
+          `Ownership updated via API: ${data.notes || 'No notes'}`
+        ]
+      );
+
+      return insertResult.rows[0];
+    });
+
+    return NextResponse.json(result);
+
+  } catch (error: any) {
+    console.error('Failed to update observed ownership:', error);
+    
+    // Handle specific database errors
+    if (error.code === '23503') {
+      return NextResponse.json(
+        { error: 'Foreign key constraint violation', detail: error.detail },
+        { status: 400 }
+      );
+    }
+    
+    if (error.code === '23502') {
+      return NextResponse.json(
+        { error: 'Required field missing', detail: error.detail },
+        { status: 400 }
+      );
+    }
+    
+    return NextResponse.json(
+      { error: error.message || 'Failed to update ownership' },
+      { status: 500 }
+    );
+  }
+}
+
+// GET endpoint to fetch observed ownership for a unit
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const unitId = searchParams.get('unit_id');
+    
+    if (!unitId) {
+      return NextResponse.json(
+        { error: 'unit_id parameter required' },
+        { status: 400 }
+      );
+    }
+
+    const result = await withTransaction(async (client) => {
+      const res = await client.query(
+        `SELECT 
+          obs.*,
+          r.code as role_code,
+          r.name as role_name,
+          o.code as org_code,
+          o.name as org_name
+         FROM unit_observed_ownership obs
+         LEFT JOIN org_role r ON r.role_id = obs.accountable_role_id
+         LEFT JOIN org_unit o ON o.org_unit_id = obs.accountable_org_unit_id
+         WHERE obs.unit_id = $1
+         ORDER BY obs.observed_as_of DESC
+         LIMIT 1`,
+        [unitId]
+      );
+      
+      return res.rows[0] || null;
+    });
+
+    return NextResponse.json(result);
+
+  } catch (error: any) {
+    console.error('Failed to fetch observed ownership:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch ownership' },
+      { status: 500 }
+    );
+  }
+}
+
+================
+File: rosetta-console/app/api/options/[type]/route.ts
+================
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+import { DropdownOption, HierarchicalOption, StreamOption } from '@/types/database';
+
+export async function GET(
+  request: Request,
+  { params }: { params: { type: string } }
+) {
+  try {
+    const { type } = params;
+    
+    let result: any[] = [];
+    
+    switch (type) {
+      case 'role':
+      case 'roles':
+        // Use v_role_options from 10-ui-helpers.sql
+        result = await query<DropdownOption>(`
+          SELECT * FROM v_role_options
+        `);
+        break;
+        
+      case 'org':
+      case 'orgs':
+        // Use v_org_options from 10-ui-helpers.sql
+        result = await query<HierarchicalOption>(`
+          SELECT * FROM v_org_options
+        `);
+        break;
+        
+      case 'stream':
+      case 'streams':
+        // Use v_stream_options from 10-ui-helpers.sql
+        result = await query<StreamOption>(`
+          SELECT * FROM v_stream_options
+        `);
+        break;
+        
+      case 'evidence-types':
+        // Return constrained evidence types
+        result = [
+          { value: 'ownership_update', label: 'Ownership Update' },
+          { value: 'kpi_measurement', label: 'KPI Measurement' },
+          { value: 'pricing_decision', label: 'Pricing Decision' },
+          { value: 'solution_outline', label: 'Solution Outline' },
+          { value: 'proposal_redline', label: 'Proposal Redline' },
+          { value: 'recruit_req', label: 'Recruitment Request' },
+          { value: 'scope_change', label: 'Scope Change' },
+          { value: 'milestone_complete', label: 'Milestone Complete' },
+          { value: 'invoice_adjustment', label: 'Invoice Adjustment' }
+        ];
+        break;
+        
+      default:
+        return NextResponse.json(
+          { error: `Unknown option type: ${type}` },
+          { status: 400 }
+        );
+    }
+    
+    return NextResponse.json(result);
+    
+  } catch (error: any) {
+    console.error(`Failed to fetch ${params.type} options:`, error);
+    return NextResponse.json(
+      { error: `Failed to fetch ${params.type} options` },
+      { status: 500 }
+    );
+  }
+}
+
+================
+File: rosetta-console/app/api/streams/route.ts
+================
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+
+export async function GET() {
+  try {
+    const result = await query(`
+      SELECT
+        s.code,
+        s.name,
+        s.stream_id,
+        s.is_enabler,
+        COUNT(DISTINCT au.unit_id) as unit_count,
+        COUNT(DISTINCT CASE WHEN obs.unit_id IS NOT NULL THEN au.unit_id END) as units_with_ownership,
+        ROUND(
+          100.0 * COUNT(DISTINCT CASE WHEN obs.unit_id IS NOT NULL THEN au.unit_id END) / 
+          NULLIF(COUNT(DISTINCT au.unit_id), 0), 
+          1
+        ) as coverage_pct,
+        -- Include alignment metrics from v_ownership_summary if available
+        COALESCE(os.aligned, 0) as aligned_count,
+        COALESCE(os.misattributed, 0) as misattributed_count,
+        COALESCE(os.not_observed, 0) as not_observed_count,
+        COALESCE(os.alignment_pct, 0) as alignment_pct
+      FROM stream s
+      LEFT JOIN atomic_unit au ON au.stream_id = s.stream_id
+      LEFT JOIN LATERAL (
+        SELECT unit_id FROM unit_observed_ownership 
+        WHERE unit_id = au.unit_id 
+        LIMIT 1
+      ) obs ON true
+      LEFT JOIN v_ownership_summary os ON os.stream = s.code
+      WHERE s.parent_id IS NULL
+      GROUP BY s.stream_id, s.code, s.name, s.is_enabler, s.order_in_parent,
+               os.aligned, os.misattributed, os.not_observed, os.alignment_pct
+      ORDER BY s.order_in_parent
+    `);
+    
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('Failed to fetch streams:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch streams data' },
+      { status: 500 }
+    );
+  }
+}
+
+================
+File: rosetta-console/app/api/summary/ownership/route.ts
+================
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+import { OwnershipSummary } from '@/types/database';
+
+export async function GET() {
+  try {
+    const result = await query<OwnershipSummary>(`
+      SELECT * FROM v_ownership_summary 
+      ORDER BY stream
+    `);
+    
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('Failed to fetch ownership summary:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch ownership summary' },
+      { status: 500 }
+    );
+  }
+}
+
+================
+File: rosetta-console/app/api/truth/paginated/route.ts
+================
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+import { RosettaTruthRow, PaginatedResult } from '@/types/database';
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    
+    // Parse pagination parameters
+    const page = parseInt(searchParams.get('page') || '1');
+    const pageSize = parseInt(searchParams.get('pageSize') || '50');
+    const filterStream = searchParams.get('stream') || null;
+    const filterStatus = searchParams.get('status') || null;
+    
+    // Validate parameters
+    if (page < 1 || pageSize < 1 || pageSize > 100) {
+      return NextResponse.json(
+        { error: 'Invalid pagination parameters' },
+        { status: 400 }
+      );
+    }
+    
+    const offset = (page - 1) * pageSize;
+    
+    // Call the paginated function from 10-ui-helpers.sql
+    const result = await query<RosettaTruthRow>(`
+      SELECT * FROM get_rosetta_truth_page(
+        $1::int,
+        $2::int,
+        $3::text,
+        $4::text
+      )`,
+      [pageSize, offset, filterStream, filterStatus]
+    );
+    
+    // Extract total count from first row (if exists)
+    const totalCount = result.length > 0 ? (result[0].total_count || 0) : 0;
+    const pageCount = Math.ceil(totalCount / pageSize);
+    
+    // Remove total_count from the data rows
+    const data = result.map(row => {
+      const { total_count, ...rest } = row;
+      return rest;
+    });
+    
+    const paginatedResult: PaginatedResult<RosettaTruthRow> = {
+      data,
+      totalCount,
+      pageCount,
+      currentPage: page,
+      pageSize
+    };
+    
+    return NextResponse.json(paginatedResult);
+    
+  } catch (error: any) {
+    console.error('Failed to fetch paginated truth data:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch truth data' },
+      { status: 500 }
+    );
+  }
+}
+
+================
+File: rosetta-console/app/evidence/page.tsx
+================
+import ComingSoon from "@/components/ComingSoon";
+
+export default function EvidencePage() {
+  return (
+    <ComingSoon
+      title="Evidence Log"
+      description="Track all ownership changes and system updates with a complete audit trail"
+      features={[
+        "View all ownership updates with timestamps",
+        "Filter by evidence type (ownership_update, kpi_measurement, etc.)",
+        "Search by unit, actor, or date range",
+        "Export evidence for compliance reporting",
+        "Automatic logging of all system changes"
+      ]}
+    />
+  );
+}
+
+================
+File: rosetta-console/app/finance/page.tsx
+================
+import ComingSoon from "@/components/ComingSoon";
+
+export default function FinancePage() {
+  return (
+    <ComingSoon
+      title="Financial Dashboard"
+      description="View direct and allocated P&L with SG&A distribution across organizational units"
+      features={[
+        "Direct P&L by practice, COE, and pillar",
+        "Allocated P&L with SG&A distribution",
+        "Budget vs Actual variance analysis",
+        "Margin calculations and trends",
+        "Drill-down from pillar to practice level",
+        "Export financial reports"
+      ]}
+    />
+  );
+}
+
+================
+File: rosetta-console/app/kpis/page.tsx
+================
+import ComingSoon from "@/components/ComingSoon";
+
+export default function KpiPage() {
+  return (
+    <ComingSoon
+      title="KPI Dashboard"
+      description="Manage driver and outcome metrics with targets and thresholds"
+      features={[
+        "Leading (driver) and lagging (outcome) KPIs",
+        "Target setting with yellow and red thresholds",
+        "Real-time measurement tracking",
+        "Unit-level and stream-level metrics",
+        "KPI cascade visualization",
+        "Automated evidence logging for KPI changes"
+      ]}
+    />
+  );
+}
+
+================
+File: rosetta-console/app/org/page.tsx
+================
+import ComingSoon from "@/components/ComingSoon";
+
+export default function OrgPage() {
+  return (
+    <ComingSoon
+      title="Organization Structure"
+      description="Navigate the hierarchical org structure with headcount and financial rollups"
+      features={[
+        "Hierarchical tree view from Pillars to People",
+        "Headcount rollups at each level",
+        "Direct P&L metrics by org unit",
+        "Practice-level detail views",
+        "Person allocation and utilization tracking",
+        "Export org chart and metrics"
+      ]}
+    />
+  );
+}
+
+================
+File: rosetta-console/app/stream/[code]/page.tsx
+================
+import { query } from "@/lib/db";
+import StreamDetailView from "@/components/StreamDetailView";
+
+export default async function StreamPage({ params }: { params: { code: string } }) {
+  const units = await query(`
+    SELECT au.*, 
+           er.code as expected_role, eo.code as expected_org,
+           obsr.code as observed_role, obso.code as observed_org
+    FROM atomic_unit au
+    JOIN stream s ON s.stream_id = au.stream_id
+    LEFT JOIN unit_expected_ownership ueo ON ueo.unit_id = au.unit_id
+    LEFT JOIN org_role er ON er.role_id = ueo.accountable_role_id
+    LEFT JOIN org_unit eo ON eo.org_unit_id = ueo.accountable_org_unit_id
+    LEFT JOIN LATERAL (
+      SELECT * FROM unit_observed_ownership 
+      WHERE unit_id = au.unit_id 
+      ORDER BY observed_as_of DESC LIMIT 1
+    ) obs ON true
+    LEFT JOIN org_role obsr ON obsr.role_id = obs.accountable_role_id
+    LEFT JOIN org_unit obso ON obso.org_unit_id = obs.accountable_org_unit_id
+    WHERE s.code = $1
+    ORDER BY au.order_in_stream
+  `, [params.code]);
+
+  return <StreamDetailView units={units} streamCode={params.code} />;
+}
+
+================
+File: rosetta-console/app/streams/page.tsx
+================
+import StreamGrid from "@/components/StreamGrid";
+import { query } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+export default async function StreamsPage() {
+  // Query includes all 6 streams including EXPAND (v4 spec lines 213-250)
+  const data = await query(`
+    SELECT
+      s.code,
+      s.name,
+      s.stream_id,
+      s.is_enabler,
+      COUNT(DISTINCT au.unit_id) as unit_count,
+      COUNT(DISTINCT CASE WHEN obs.unit_id IS NOT NULL THEN au.unit_id END) as units_with_ownership,
+      ROUND(
+        100.0 * COUNT(DISTINCT CASE WHEN obs.unit_id IS NOT NULL THEN au.unit_id END) / 
+        NULLIF(COUNT(DISTINCT au.unit_id), 0), 
+        1
+      ) as coverage_pct
+    FROM stream s
+    LEFT JOIN atomic_unit au ON au.stream_id = s.stream_id
+    LEFT JOIN LATERAL (
+      SELECT unit_id FROM unit_observed_ownership 
+      WHERE unit_id = au.unit_id 
+      LIMIT 1
+    ) obs ON true
+    WHERE s.parent_id IS NULL
+    GROUP BY s.stream_id, s.code, s.name, s.is_enabler, s.order_in_parent
+    ORDER BY s.order_in_parent;
+  `);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold mb-2">Value Streams</h1>
+        <p className="text-muted-foreground">
+          Navigate all six value streams including the EXPAND stream. Click any stream to see its atomic units and ownership details.
+        </p>
+      </div>
+      <StreamGrid streams={data as any[]} />
+    </div>
+  );
+}
+
+================
+File: rosetta-console/app/truth/page.tsx
+================
+"use client";
+
+import { OwnershipSummary } from "@/components/OwnershipSummary";
+import TruthTableV4 from "@/components/TruthTableV4";
+
+// Updated Truth page with v4 spec features (lines 69-211)
+export default function TruthPage({ 
+  searchParams 
+}: { 
+  searchParams?: { 
+    stream?: string;
+    status?: string;
+    page?: string;
+  } 
+}) {
+  const initialPage = searchParams?.page ? parseInt(searchParams.page) : 1;
+  const initialFilters = {
+    stream: searchParams?.stream,
+    status: searchParams?.status
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">Truth: Expected vs Observed</h1>
+        <p className="text-muted-foreground mt-2">
+          Compare expected ownership (fiction) with observed reality. 
+          Click any cell to update observed ownership. 
+          Evidence is automatically logged for all changes.
+        </p>
+      </div>
+
+      {/* Ownership Summary Dashboard */}
+      <OwnershipSummary />
+
+      {/* Truth Table with Pagination */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Ownership Details</h2>
+          <TruthTableV4 
+            initialPage={initialPage}
+            initialFilters={initialFilters}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+================
+File: rosetta-console/app/globals.css
+================
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 8px;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+.container {
+  @apply mx-auto max-w-7xl px-4;
+}
+
+/* simple status badge styles */
+.badge {
+  @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold;
+}
+.badge-green { @apply bg-green-100 text-green-800; }
+.badge-red { @apply bg-red-100 text-red-800; }
+.badge-yellow { @apply bg-yellow-100 text-yellow-800; }
+
+.card {
+  @apply bg-white rounded-xl shadow border border-gray-200;
+}
+.card-header { @apply px-4 py-3 border-b border-gray-100 font-semibold; }
+.card-body { @apply p-4; }
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+================
+File: rosetta-console/app/layout-old.tsx
+================
+import "./globals.css";
+import Link from "next/link";
+
+export const metadata = {
+  title: "Rosetta Console",
+  description: "Expose fiction vs reality, connect drivers to outcomes, and show dollars clearly."
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <nav className="bg-white border-b border-gray-200">
+          <div className="container flex items-center gap-6 py-3">
+            <span className="font-bold text-brand-700">Rosetta Console</span>
+            <Link className="hover:text-brand-700" href="/org">Org</Link>
+            <Link className="hover:text-brand-700" href="/streams">Streams</Link>
+            <Link className="hover:text-brand-700" href="/truth">Truth</Link>
+            <Link className="hover:text-brand-700" href="/evidence">Evidence</Link>
+            <Link className="hover:text-brand-700" href="/kpis">KPIs</Link>
+            <Link className="hover:text-brand-700" href="/finance">Finance</Link>
+          </div>
+        </nav>
+        <main className="container py-6">{children}</main>
+      </body>
+    </html>
+  );
+}
+
+================
+File: rosetta-console/app/layout.tsx
+================
+import "./globals.css";
+import { Providers } from "@/components/Providers";
+import Link from "next/link";
+
+export const metadata = {
+  title: "Rosetta Console",
+  description: "Expose fiction vs reality, connect drivers to outcomes, and show dollars clearly."
+};
+
+const navigation = [
+  { name: 'Dashboard', href: '/' },
+  { name: 'Truth', href: '/truth' },
+  { name: 'Streams', href: '/streams' },
+  { name: 'Organization', href: '/org' },
+  { name: 'Evidence', href: '/evidence' },
+  { name: 'KPIs', href: '/kpis' },
+  { name: 'Finance', href: '/finance' },
+];
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>
+          <div className="min-h-screen bg-gray-50">
+            <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+              <div className="container mx-auto px-4">
+                <div className="flex items-center justify-between h-16">
+                  <div className="flex items-center gap-8">
+                    <Link href="/" className="flex items-center gap-2">
+                      <span className="font-bold text-lg">Rosetta Console</span>
+                      <span className="text-sm text-gray-500">v4.0</span>
+                    </Link>
+                    <div className="hidden md:flex items-center space-x-4">
+                      {navigation.map((item) => (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-100 transition-colors"
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    Everything visible. Everything editable. Real-time impact.
+                  </div>
+                </div>
+              </div>
+            </nav>
+            <main className="container mx-auto px-4 py-6">
+              {children}
+            </main>
+          </div>
+        </Providers>
+      </body>
+    </html>
+  );
+}
+
+================
+File: rosetta-console/app/page.tsx
+================
+"use client";
+
+import { OwnershipSummary } from "@/components/OwnershipSummary";
+import Link from "next/link";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  CheckCircle2, 
+  Clock, 
+  FileText, 
+  BarChart3, 
+  Building2, 
+  DollarSign,
+  Layers,
+  TrendingUp
+} from "lucide-react";
+
+const navigationCards = [
+  {
+    title: "Truth Table",
+    description: "Compare expected vs observed ownership with real-time editing",
+    href: "/truth",
+    status: "working",
+    icon: CheckCircle2,
+    color: "text-green-600"
+  },
+  {
+    title: "Value Streams",
+    description: "Navigate through all 6 value streams including EXPAND",
+    href: "/streams",
+    status: "working", 
+    icon: Layers,
+    color: "text-blue-600"
+  },
+  {
+    title: "Evidence Log",
+    description: "Audit trail of all ownership changes and updates",
+    href: "/evidence",
+    status: "coming-soon",
+    icon: FileText,
+    color: "text-gray-400"
+  },
+  {
+    title: "KPIs",
+    description: "Driver and outcome metrics management",
+    href: "/kpis",
+    status: "coming-soon",
+    icon: BarChart3,
+    color: "text-gray-400"
+  },
+  {
+    title: "Organization",
+    description: "Hierarchical org structure with financial rollups",
+    href: "/org",
+    status: "coming-soon",
+    icon: Building2,
+    color: "text-gray-400"
+  },
+  {
+    title: "Finance",
+    description: "Direct and allocated P&L views",
+    href: "/finance",
+    status: "coming-soon",
+    icon: DollarSign,
+    color: "text-gray-400"
+  }
+];
+
+export default function HomePage() {
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center py-8">
+        <h1 className="text-4xl font-bold mb-4">Rosetta Console</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Expose fiction vs reality, connect drivers to outcomes, and show dollars clearly.
+        </p>
+      </div>
+
+      {/* Ownership Summary Dashboard */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h2 className="text-2xl font-semibold mb-6">Ownership Alignment Overview</h2>
+        <OwnershipSummary />
+      </div>
+
+      {/* Navigation Cards */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-semibold">System Navigation</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {navigationCards.map((card) => {
+            const Icon = card.icon;
+            const isWorking = card.status === "working";
+            
+            return isWorking ? (
+              <Link key={card.title} href={card.href}>
+                <Card className="hover:shadow-lg transition-all cursor-pointer h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Icon className={`h-5 w-5 ${card.color}`} />
+                      {card.title}
+                      <span className="ml-auto">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      </span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>{card.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              </Link>
+            ) : (
+              <Card key={card.title} className="opacity-60 h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Icon className={card.color} />
+                    {card.title}
+                    <span className="ml-auto">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription>{card.description}</CardDescription>
+                  <p className="text-sm text-muted-foreground mt-2 font-medium">
+                    Coming Soon
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Status Footer */}
+      <div className="bg-muted rounded-lg p-6 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+          <div>
+            <div className="text-2xl font-bold text-green-600">2</div>
+            <div className="text-sm text-muted-foreground">Pages Working</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-blue-600">6</div>
+            <div className="text-sm text-muted-foreground">Value Streams</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-purple-600">32</div>
+            <div className="text-sm text-muted-foreground">Atomic Units</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+================
+File: rosetta-console/components/ui/alert.tsx
+================
+import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const alertVariants = cva(
+  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
+  {
+    variants: {
+      variant: {
+        default: "bg-background text-foreground",
+        destructive:
+          "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+const Alert = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+>(({ className, variant, ...props }, ref) => (
+  <div
+    ref={ref}
+    role="alert"
+    className={cn(alertVariants({ variant }), className)}
+    {...props}
+  />
+))
+Alert.displayName = "Alert"
+
+const AlertTitle = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => (
+  <h5
+    ref={ref}
+    className={cn("mb-1 font-medium leading-none tracking-tight", className)}
+    {...props}
+  />
+))
+AlertTitle.displayName = "AlertTitle"
+
+const AlertDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("text-sm [&_p]:leading-relaxed", className)}
+    {...props}
+  />
+))
+AlertDescription.displayName = "AlertDescription"
+
+export { Alert, AlertTitle, AlertDescription }
+
+================
+File: rosetta-console/components/ui/badge.tsx
+================
+import { ReactNode } from "react";
+
+type BadgeProps = {
+  children: ReactNode;
+  variant?: "default" | "outline" | "success" | "warning" | "error" | "secondary" | "destructive";
+  className?: string;
+};
+
+export function Badge({ children, variant = "default", className = "" }: BadgeProps) {
+  const baseClasses = "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium";
+  
+  const variantClasses = {
+    default: "bg-brand-100 text-brand-800",
+    outline: "border border-gray-300 text-gray-700",
+    success: "bg-green-100 text-green-800",
+    warning: "bg-yellow-100 text-yellow-800",
+    error: "bg-red-100 text-red-800",
+    secondary: "bg-gray-100 text-gray-800",
+    destructive: "bg-red-100 text-red-800",
+  };
+
+  return (
+    <span className={`${baseClasses} ${variantClasses[variant] || variantClasses.default} ${className}`}>
+      {children}
+    </span>
+  );
+}
+
+================
+File: rosetta-console/components/ui/button.tsx
+================
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default:
+          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-10 rounded-md px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+
+================
+File: rosetta-console/components/ui/card.tsx
+================
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+const Card = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn(
+      "rounded-xl border bg-card text-card-foreground shadow",
+      className
+    )}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("font-semibold leading-none tracking-tight", className)}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+
+================
+File: rosetta-console/components/ui/index.ts
+================
+export { Badge } from "./badge";
+export { default as InlineEdit } from "./InlineEdit";
+export { default as Tooltip } from "./Tooltip";
+export { default as StatusBadge } from "./StatusBadge";
+
+================
+File: rosetta-console/components/ui/InlineEdit.tsx
+================
+"use client";
+import { useState, useRef, useEffect } from "react";
+
+type InlineEditProps = {
+  value: string;
+  onSave: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+};
+
+export default function InlineEdit({ value, onSave, placeholder = "Click to edit", className = "" }: InlineEditProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    setEditValue(value);
+  }, [value]);
+
+  const handleSave = () => {
+    if (editValue !== value) {
+      onSave(editValue);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditValue(value);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSave();
+    } else if (e.key === "Escape") {
+      handleCancel();
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="inline-flex items-center gap-1">
+        <input
+          ref={inputRef}
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          className={`px-2 py-1 border rounded text-sm ${className}`}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <span
+      onClick={() => setIsEditing(true)}
+      className={`inline-block px-2 py-1 hover:bg-gray-100 rounded cursor-pointer ${
+        !value || value === "?" ? "text-gray-400 italic" : ""
+      } ${className}`}
+    >
+      {value || placeholder}
+    </span>
+  );
+}
+
+================
+File: rosetta-console/components/ui/select.tsx
+================
+"use client"
+
+import * as React from "react"
+import * as SelectPrimitive from "@radix-ui/react-select"
+import { Check, ChevronDown, ChevronUp } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+const Select = SelectPrimitive.Root
+
+const SelectGroup = SelectPrimitive.Group
+
+const SelectValue = SelectPrimitive.Value
+
+const SelectTrigger = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      "flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+      className
+    )}
+    {...props}
+  >
+    {children}
+    <SelectPrimitive.Icon asChild>
+      <ChevronDown className="h-4 w-4 opacity-50" />
+    </SelectPrimitive.Icon>
+  </SelectPrimitive.Trigger>
+))
+SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
+
+const SelectScrollUpButton = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.ScrollUpButton
+    ref={ref}
+    className={cn(
+      "flex cursor-default items-center justify-center py-1",
+      className
+    )}
+    {...props}
+  >
+    <ChevronUp className="h-4 w-4" />
+  </SelectPrimitive.ScrollUpButton>
+))
+SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName
+
+const SelectScrollDownButton = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.ScrollDownButton>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.ScrollDownButton
+    ref={ref}
+    className={cn(
+      "flex cursor-default items-center justify-center py-1",
+      className
+    )}
+    {...props}
+  >
+    <ChevronDown className="h-4 w-4" />
+  </SelectPrimitive.ScrollDownButton>
+))
+SelectScrollDownButton.displayName =
+  SelectPrimitive.ScrollDownButton.displayName
+
+const SelectContent = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
+>(({ className, children, position = "popper", ...props }, ref) => (
+  <SelectPrimitive.Portal>
+    <SelectPrimitive.Content
+      ref={ref}
+      className={cn(
+        "relative z-50 max-h-[--radix-select-content-available-height] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-select-content-transform-origin]",
+        position === "popper" &&
+          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+        className
+      )}
+      position={position}
+      {...props}
+    >
+      <SelectScrollUpButton />
+      <SelectPrimitive.Viewport
+        className={cn(
+          "p-1",
+          position === "popper" &&
+            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
+        )}
+      >
+        {children}
+      </SelectPrimitive.Viewport>
+      <SelectScrollDownButton />
+    </SelectPrimitive.Content>
+  </SelectPrimitive.Portal>
+))
+SelectContent.displayName = SelectPrimitive.Content.displayName
+
+const SelectLabel = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Label>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.Label
+    ref={ref}
+    className={cn("px-2 py-1.5 text-sm font-semibold", className)}
+    {...props}
+  />
+))
+SelectLabel.displayName = SelectPrimitive.Label.displayName
+
+const SelectItem = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
+>(({ className, children, ...props }, ref) => (
+  <SelectPrimitive.Item
+    ref={ref}
+    className={cn(
+      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-2 pr-8 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className
+    )}
+    {...props}
+  >
+    <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
+      <SelectPrimitive.ItemIndicator>
+        <Check className="h-4 w-4" />
+      </SelectPrimitive.ItemIndicator>
+    </span>
+    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+  </SelectPrimitive.Item>
+))
+SelectItem.displayName = SelectPrimitive.Item.displayName
+
+const SelectSeparator = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Separator>,
+  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
+>(({ className, ...props }, ref) => (
+  <SelectPrimitive.Separator
+    ref={ref}
+    className={cn("-mx-1 my-1 h-px bg-muted", className)}
+    {...props}
+  />
+))
+SelectSeparator.displayName = SelectPrimitive.Separator.displayName
+
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
+}
+
+================
+File: rosetta-console/components/ui/skeleton.tsx
+================
+import { cn } from "@/lib/utils"
+
+function Skeleton({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn("animate-pulse rounded-md bg-primary/10", className)}
+      {...props}
+    />
+  )
+}
+
+export { Skeleton }
+
+================
+File: rosetta-console/components/ui/StatusBadge.tsx
+================
+import { Badge } from "./badge";
+
+type StatusBadgeProps = {
+  status?: string | null;
+};
+
+export default function StatusBadge({ status }: StatusBadgeProps) {
+  if (!status) return <Badge variant="outline">Unknown</Badge>;
+
+  const variants: Record<string, "success" | "error" | "warning"> = {
+    "Aligned": "success",
+    "Misattributed": "error",
+    "Not Observed": "warning",
+    "Role Mismatch": "error",
+    "Org Mismatch": "error",
+  };
+
+  return (
+    <Badge variant={variants[status] || "outline"}>
+      {status}
+    </Badge>
+  );
+}
+
+================
+File: rosetta-console/components/ui/Tabs.tsx
+================
+"use client";
+
+import React, { createContext, useContext, useState } from "react";
+
+interface TabsContextType {
+  value: string;
+  onValueChange: (value: string) => void;
+}
+
+const TabsContext = createContext<TabsContextType | undefined>(undefined);
+
+export function Tabs({
+  children,
+  defaultValue,
+  value: controlledValue,
+  onValueChange,
+  className = "",
+}: {
+  children: React.ReactNode;
+  defaultValue?: string;
+  value?: string;
+  onValueChange?: (value: string) => void;
+  className?: string;
+}) {
+  const [internalValue, setInternalValue] = useState(defaultValue || "");
+  const value = controlledValue !== undefined ? controlledValue : internalValue;
+  
+  const handleValueChange = (newValue: string) => {
+    if (controlledValue === undefined) {
+      setInternalValue(newValue);
+    }
+    onValueChange?.(newValue);
+  };
+
+  return (
+    <TabsContext.Provider value={{ value, onValueChange: handleValueChange }}>
+      <div className={className}>{children}</div>
+    </TabsContext.Provider>
+  );
+}
+
+export function TabsList({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`flex border-b border-gray-200 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+export function TabsTrigger({
+  value,
+  children,
+  className = "",
+}: {
+  value: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const context = useContext(TabsContext);
+  if (!context) throw new Error("TabsTrigger must be used within Tabs");
+  
+  const isActive = context.value === value;
+  
+  return (
+    <button
+      onClick={() => context.onValueChange(value)}
+      className={`
+        px-4 py-2 font-medium text-sm transition-colors
+        ${isActive 
+          ? "text-blue-600 border-b-2 border-blue-600" 
+          : "text-gray-500 hover:text-gray-700"
+        }
+        ${className}
+      `}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function TabsContent({
+  value,
+  children,
+  className = "",
+}: {
+  value: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const context = useContext(TabsContext);
+  if (!context) throw new Error("TabsContent must be used within Tabs");
+  
+  if (context.value !== value) return null;
+  
+  return <div className={`mt-4 ${className}`}>{children}</div>;
+}
+
+================
+File: rosetta-console/components/ui/Tooltip.tsx
+================
+"use client";
+import { useState, ReactNode } from "react";
+
+type TooltipProps = {
+  children: ReactNode;
+  content: string;
+  position?: "top" | "bottom" | "left" | "right";
+};
+
+export default function Tooltip({ children, content, position = "top" }: TooltipProps) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  const positionClasses = {
+    top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
+    bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
+    left: "right-full top-1/2 -translate-y-1/2 mr-2",
+    right: "left-full top-1/2 -translate-y-1/2 ml-2",
+  };
+
+  return (
+    <div className="relative inline-block">
+      <div
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+      >
+        {children}
+      </div>
+      {isVisible && (
+        <div
+          className={`absolute z-10 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg whitespace-nowrap ${positionClasses[position]}`}
+        >
+          {content}
+          <div
+            className={`absolute w-2 h-2 bg-gray-900 transform rotate-45 ${
+              position === "top" ? "top-full left-1/2 -translate-x-1/2 -mt-1" :
+              position === "bottom" ? "bottom-full left-1/2 -translate-x-1/2 -mb-1" :
+              position === "left" ? "left-full top-1/2 -translate-y-1/2 -ml-1" :
+              "right-full top-1/2 -translate-y-1/2 -mr-1"
+            }`}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+================
+File: rosetta-console/components/ComingSoon.tsx
+================
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Clock } from "lucide-react";
+import Link from "next/link";
+
+interface ComingSoonProps {
+  title: string;
+  description: string;
+  features?: string[];
+}
+
+export default function ComingSoon({ title, description, features }: ComingSoonProps) {
+  return (
+    <div className="max-w-2xl mx-auto py-12">
+      <Card>
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Clock className="h-12 w-12 text-muted-foreground" />
+          </div>
+          <CardTitle className="text-2xl">{title}</CardTitle>
+          <CardDescription className="text-lg mt-2">
+            {description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-muted rounded-lg p-4 text-center">
+            <p className="text-sm font-medium text-muted-foreground">
+              This feature is currently under development
+            </p>
+          </div>
+          
+          {features && features.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="font-semibold">Planned Features:</h3>
+              <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                {features.map((feature, idx) => (
+                  <li key={idx}>{feature}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          <div className="pt-4 text-center">
+            <Link 
+              href="/"
+              className="text-sm text-primary hover:underline"
+            >
+              ← Return to Dashboard
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+================
+File: rosetta-console/components/DataTablePagination.tsx
+================
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+
+interface PaginationProps {
+  pageCount: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+  pageSize: number;
+  totalCount: number;
+}
+
+// Implementation from v4 spec lines 389-448
+export function DataTablePagination({
+  pageCount,
+  currentPage,
+  onPageChange,
+  pageSize,
+  totalCount
+}: PaginationProps) {
+  const startItem = ((currentPage - 1) * pageSize) + 1;
+  const endItem = Math.min(currentPage * pageSize, totalCount);
+
+  return (
+    <div className="flex items-center justify-between px-2 py-4">
+      <div className="flex items-center space-x-2">
+        <p className="text-sm text-muted-foreground">
+          Showing {startItem} to {endItem} of {totalCount} results
+        </p>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+          aria-label="Go to first page"
+        >
+          <ChevronsLeft className="h-4 w-4" />
+          <span className="sr-only">First</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          aria-label="Go to previous page"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span className="sr-only">Previous</span>
+        </Button>
+        <span className="text-sm font-medium">
+          Page {currentPage} of {pageCount}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === pageCount}
+          aria-label="Go to next page"
+        >
+          <ChevronRight className="h-4 w-4" />
+          <span className="sr-only">Next</span>
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(pageCount)}
+          disabled={currentPage === pageCount}
+          aria-label="Go to last page"
+        >
+          <ChevronsRight className="h-4 w-4" />
+          <span className="sr-only">Last</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+================
+File: rosetta-console/components/ErrorBoundary.tsx
+================
+"use client";
+
+import React, { ErrorInfo } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { AlertCircle } from 'lucide-react';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  fallback?: React.ComponentType<{ error: Error; reset: () => void }>;
+}
+
+// Implementation from v4 spec lines 800-847
+export class ErrorBoundary extends React.Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Log error to console in development
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Error boundary caught:', error, errorInfo);
+    }
+    
+    // In production, you would send this to an error tracking service
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+      // Example: Send to error tracking service
+      // trackError(error, errorInfo);
+    }
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: undefined });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      // Use custom fallback if provided
+      if (this.props.fallback) {
+        const FallbackComponent = this.props.fallback;
+        return (
+          <FallbackComponent 
+            error={this.state.error!} 
+            reset={this.handleReset} 
+          />
+        );
+      }
+
+      // Default error UI
+      return (
+        <div className="min-h-[400px] flex items-center justify-center p-4">
+          <Alert variant="destructive" className="max-w-md">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Something went wrong</AlertTitle>
+            <AlertDescription className="mt-2">
+              <p className="mb-4">
+                {this.state.error?.message || 'An unexpected error occurred while loading this page.'}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                  size="sm"
+                >
+                  Reload Page
+                </Button>
+                <Button
+                  onClick={this.handleReset}
+                  variant="outline"
+                  size="sm"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Hook for functional components to handle errors
+export function useErrorHandler() {
+  const [error, setError] = React.useState<Error | null>(null);
+
+  React.useEffect(() => {
+    if (error) {
+      throw error;
+    }
+  }, [error]);
+
+  return {
+    throwError: setError,
+    clearError: () => setError(null),
+  };
+}
+
+// Async error boundary wrapper for handling async errors
+export function AsyncErrorBoundary({ 
+  children,
+  fallback 
+}: {
+  children: React.ReactNode;
+  fallback?: React.ComponentType<{ error: Error; reset: () => void }>;
+}) {
+  return (
+    <ErrorBoundary fallback={fallback}>
+      <React.Suspense
+        fallback={
+          <div className="flex items-center justify-center p-8">
+            <div className="text-muted-foreground">Loading...</div>
+          </div>
+        }
+      >
+        {children}
+      </React.Suspense>
+    </ErrorBoundary>
+  );
+}
+
+================
+File: rosetta-console/components/OwnershipSummary.tsx
+================
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { OwnershipSummary as OwnershipSummaryType } from "@/types/database";
+
+// Implementation from v4 spec lines 449-486
+export function OwnershipSummary() {
+  const { data, isLoading, error } = useQuery<OwnershipSummaryType[]>({
+    queryKey: ['ownership-summary'],
+    queryFn: async () => {
+      const response = await fetch('/api/summary/ownership');
+      if (!response.ok) {
+        throw new Error('Failed to fetch ownership summary');
+      }
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchInterval: 60 * 1000, // Refetch every minute
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {[...Array(6)].map((_, i) => (
+          <Card key={i}>
+            <CardHeader className="pb-2">
+              <Skeleton className="h-4 w-20" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-16 mb-2" />
+              <Skeleton className="h-3 w-24" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500">
+        Failed to load ownership summary
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground">
+        No ownership data available
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {data.map((stream) => (
+        <Card key={stream.stream} className="hover:shadow-lg transition-shadow">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              {stream.stream_name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div>
+                <div className="text-2xl font-bold">
+                  {Number(stream.alignment_pct).toFixed(1)}%
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {Number(stream.aligned)} of {Number(stream.total_units)} aligned
+                </div>
+              </div>
+              
+              {Number(stream.misattributed) > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  {Number(stream.misattributed)} misattributed
+                </Badge>
+              )}
+              
+              {Number(stream.not_observed) > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {Number(stream.not_observed)} not observed
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// Dashboard wrapper component for server-side rendering support
+export function OwnershipSummaryDashboard({ 
+  initialData 
+}: { 
+  initialData?: OwnershipSummaryType[] 
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Ownership Alignment Summary</h2>
+        <Badge variant="outline" className="text-xs">
+          Auto-refreshes every minute
+        </Badge>
+      </div>
+      <OwnershipSummary />
+    </div>
+  );
+}
+
+================
+File: rosetta-console/components/Providers.tsx
+================
+"use client";
+
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from '@/lib/queryClient';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        {process.env.NODE_ENV === 'development' && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+}
+
+================
+File: rosetta-console/components/StatusChip.tsx
+================
+import { statusClass } from "@/lib/utils";
+
+export default function StatusChip({ status }: { status?: string }) {
+  return <span className={statusClass(status)}>{status || "Unknown"}</span>;
+}
+
+================
+File: rosetta-console/components/StreamDetailView.tsx
+================
+"use client";
+import { useState } from "react";
+
+export default function StreamDetailView({ units, streamCode }) {
+  const [data, setData] = useState(units);
+
+  async function setObserved(unitId, role, org) {
+    await fetch('/api/observed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ unitId, role, org })
+    });
+    // Update local state
+    setData(data.map(u => 
+      u.unit_id === unitId 
+        ? { ...u, observed_role: role, observed_org: org }
+        : u
+    ));
+  }
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">{streamCode} Stream Units</h1>
+      
+      <div className="bg-white rounded-lg shadow">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="text-left p-4">Unit</th>
+              <th className="text-left p-4">Expected</th>
+              <th className="text-left p-4">Observed</th>
+              <th className="text-left p-4">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map(unit => {
+              const status = !unit.observed_role ? 'Not Set' :
+                unit.expected_role === unit.observed_role && 
+                unit.expected_org === unit.observed_org ? 'Aligned' : 'Misattributed';
+              
+              return (
+                <tr key={unit.unit_id} className={
+                  status === 'Aligned' ? 'bg-green-50' :
+                  status === 'Misattributed' ? 'bg-red-50' :
+                  ''
+                }>
+                  <td className="p-4">
+                    <div className="font-medium">{unit.code}</div>
+                    <div className="text-sm text-gray-600">{unit.name}</div>
+                  </td>
+                  
+                  <td className="p-4 font-mono text-sm">
+                    {unit.expected_role}@{unit.expected_org}
+                  </td>
+                  
+                  <td className="p-4">
+                    <ObservedOwnerEdit 
+                      unit={unit}
+                      onSave={(role, org) => setObserved(unit.unit_id, role, org)}
+                    />
+                  </td>
+                  
+                  <td className="p-4">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      status === 'Aligned' ? 'bg-green-200 text-green-800' :
+                      status === 'Misattributed' ? 'bg-red-200 text-red-800' :
+                      'bg-gray-200 text-gray-800'
+                    }`}>
+                      {status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// Simple inline edit - NO DROPDOWNS UNLESS CLICKED
+function ObservedOwnerEdit({ unit, onSave }) {
+  const [editing, setEditing] = useState(false);
+  const [role, setRole] = useState(unit.observed_role || '');
+  const [org, setOrg] = useState(unit.observed_org || '');
+
+  if (!editing) {
+    return (
+      <div 
+        onClick={() => setEditing(true)}
+        className="cursor-pointer hover:bg-gray-100 p-1 rounded font-mono text-sm"
+      >
+        {unit.observed_role && unit.observed_org 
+          ? `${unit.observed_role}@${unit.observed_org}`
+          : <span className="text-gray-400">Click to set</span>
+        }
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-2">
+      <input 
+        className="border rounded px-2 py-1 text-sm w-32"
+        placeholder="Role"
+        value={role}
+        onChange={(e) => setRole(e.target.value)}
+      />
+      <input 
+        className="border rounded px-2 py-1 text-sm w-32"
+        placeholder="Org"
+        value={org}
+        onChange={(e) => setOrg(e.target.value)}
+      />
+      <button 
+        onClick={() => {
+          onSave(role, org);
+          setEditing(false);
+        }}
+        className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+      >
+        Save
+      </button>
+    </div>
+  );
+}
+
+================
+File: rosetta-console/components/StreamGrid.tsx
+================
+"use client";
+
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Trophy, 
+  Package, 
+  DollarSign, 
+  TrendingUp, 
+  Users, 
+  Settings,
+  LucideIcon
+} from "lucide-react";
+
+// Stream configuration from v4 spec lines 229-240
+const streamConfig: Record<string, { 
+  name: string; 
+  icon: LucideIcon; 
+  color: string;
+  description: string;
+}> = {
+  WIN: { 
+    name: 'Win Work', 
+    icon: Trophy, 
+    color: 'text-blue-600',
+    description: 'Pursue and win new business'
+  },
+  DELIVER: { 
+    name: 'Deliver Work', 
+    icon: Package, 
+    color: 'text-green-600',
+    description: 'Execute and deliver client work'
+  },
+  COLLECT: { 
+    name: 'Collect Cash', 
+    icon: DollarSign, 
+    color: 'text-yellow-600',
+    description: 'Invoice and collect payments'
+  },
+  EXPAND: { 
+    name: 'Expand Clients', 
+    icon: TrendingUp, 
+    color: 'text-purple-600',
+    description: 'Grow existing client relationships'
+  },
+  TALENT: { 
+    name: 'Talent Engine', 
+    icon: Users, 
+    color: 'text-pink-600',
+    description: 'Recruit and develop talent'
+  },
+  OPERATE: { 
+    name: 'Operate Business', 
+    icon: Settings, 
+    color: 'text-gray-600',
+    description: 'Run business operations'
+  }
+};
+
+interface StreamData {
+  code: string;
+  name: string;
+  stream_id: number;
+  is_enabler: boolean;
+  unit_count: number;
+  units_with_ownership: number;
+  coverage_pct: number;
+}
+
+interface StreamGridProps {
+  streams: StreamData[];
+}
+
+export default function StreamGrid({ streams }: StreamGridProps) {
+  // Order streams as specified
+  const orderedCodes = ['WIN', 'DELIVER', 'COLLECT', 'EXPAND', 'TALENT', 'OPERATE'];
+  
+  // Create a map for easy lookup
+  const streamMap = new Map(streams.map(s => [s.code, s]));
+  
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {orderedCodes.map(code => {
+        const stream = streamMap.get(code);
+        const config = streamConfig[code];
+        
+        if (!config) return null;
+        
+        const Icon = config.icon;
+        const hasData = stream && stream.unit_count > 0;
+        const coverage = Number(stream?.coverage_pct) || 0;
+        
+        return (
+          <Link 
+            key={code} 
+            href={`/stream/${code.toLowerCase()}`}
+            className="block"
+          >
+            <Card className="h-full hover:shadow-lg transition-all cursor-pointer hover:scale-[1.02]">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span className="flex items-center gap-2">
+                    <Icon className={`h-5 w-5 ${config.color}`} />
+                    {config.name}
+                  </span>
+                  {hasData && coverage > 0 && (
+                    <Badge 
+                      variant={coverage >= 80 ? "default" : coverage >= 50 ? "secondary" : "outline"}
+                      className="text-xs"
+                    >
+                      {coverage.toFixed(0)}%
+                    </Badge>
+                  )}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {config.description}
+                </p>
+              </CardHeader>
+              <CardContent>
+                {hasData ? (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Units</span>
+                      <span className="text-2xl font-bold">{stream.unit_count}</span>
+                    </div>
+                    {stream.units_with_ownership > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Observed</span>
+                        <span className="text-lg font-medium text-green-600">
+                          {stream.units_with_ownership}
+                        </span>
+                      </div>
+                    )}
+                    {stream.is_enabler && (
+                      <Badge variant="outline" className="w-full justify-center mt-2">
+                        Enabler Stream
+                      </Badge>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Icon className={`h-12 w-12 mx-auto mb-2 opacity-20 ${config.color}`} />
+                    <p className="text-sm">No units defined</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+================
+File: rosetta-console/components/StreamOutcomes.tsx
+================
+import { Badge } from "./ui";
+
+type OutcomeData = {
+  stream: string;
+  stream_name: string;
+  win_rate?: number;
+  avg_margin?: number;
+  realization?: number;
+  on_time?: number;
+  utilization?: number;
+  dso?: number;
+};
+
+type StreamOutcomesProps = {
+  data: OutcomeData[];
+};
+
+export default function StreamOutcomes({ data }: StreamOutcomesProps) {
+  const getPerformanceColor = (value?: number, target: number = 75) => {
+    if (!value) return "text-gray-400";
+    if (value >= target) return "text-green-600";
+    if (value >= target * 0.9) return "text-yellow-600";
+    return "text-red-600";
+  };
+
+  const formatMetric = (value?: number, suffix: string = "%") => {
+    if (value === null || value === undefined) return "—";
+    return `${Math.round(value)}${suffix}`;
+  };
+
+  return (
+    <div className="bg-white rounded-lg shadow">
+      <div className="px-4 py-3 border-b">
+        <h3 className="font-semibold">Stream Outcomes</h3>
+        <p className="text-xs text-gray-600">Key performance indicators</p>
+      </div>
+      
+      <div className="p-4 space-y-4">
+        {data.map(stream => (
+          <div key={stream.stream} className="border rounded p-3">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <Badge>{stream.stream}</Badge>
+                <div className="text-xs text-gray-600 mt-1">{stream.stream_name}</div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Win Rate</span>
+                <span className={`font-medium ${getPerformanceColor(stream.win_rate, 30)}`}>
+                  {formatMetric(stream.win_rate)}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">Margin</span>
+                <span className={`font-medium ${getPerformanceColor(stream.avg_margin, 20)}`}>
+                  {formatMetric(stream.avg_margin)}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">Realization</span>
+                <span className={`font-medium ${getPerformanceColor(stream.realization, 90)}`}>
+                  {formatMetric(stream.realization)}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">On-Time</span>
+                <span className={`font-medium ${getPerformanceColor(stream.on_time, 85)}`}>
+                  {formatMetric(stream.on_time)}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">Utilization</span>
+                <span className={`font-medium ${getPerformanceColor(stream.utilization, 75)}`}>
+                  {formatMetric(stream.utilization)}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-600">DSO</span>
+                <span className={`font-medium ${stream.dso && stream.dso <= 45 ? "text-green-600" : "text-red-600"}`}>
+                  {formatMetric(stream.dso, " days")}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+================
+File: rosetta-console/components/TruthTableV4.tsx
+================
+"use client";
+
+import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { DataTablePagination } from "@/components/DataTablePagination";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+import { 
+  RosettaTruthRow, 
+  PaginatedResult, 
+  DropdownOption,
+  HierarchicalOption 
+} from "@/types/database";
+
+// Implementation from v4 spec lines 169-211
+function OwnershipCell({ 
+  value, 
+  expected,
+  type,
+  unitId,
+  field
+}: {
+  value: string;
+  expected: string;
+  type: 'role' | 'org';
+  unitId: number;
+  field: 'role' | 'org';
+}) {
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  
+  const { data: options } = useQuery<DropdownOption[] | HierarchicalOption[]>({
+    queryKey: ['options', type],
+    queryFn: async () => {
+      const response = await fetch(`/api/options/${type}`);
+      if (!response.ok) throw new Error('Failed to fetch options');
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000 // Cache for 5 minutes
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (newValue: number | null) => {
+      const response = await fetch('/api/observed-ownership', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unit_id: unitId,
+          [`accountable_${field}_id`]: newValue,
+          source: 'UI',
+          notes: `Updated ${field} via Truth page`
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update ownership');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['truth-data'] });
+      queryClient.invalidateQueries({ queryKey: ['ownership-summary'] });
+      setIsEditing(false);
+    }
+  });
+
+  // Handle UNDEFINED expected ownership (v4 spec lines 182-189)
+  if (expected === 'UNDEFINED') {
+    return (
+      <div className="text-muted-foreground italic text-sm">
+        Not defined
+      </div>
+    );
+  }
+
+  // Handle NOT_SET observed ownership (v4 spec lines 191-201)
+  if (value === 'NOT_SET' || !value) {
+    if (isEditing) {
+      return (
+        <Select
+          onValueChange={(val) => {
+            const numVal = val === 'null' ? null : parseInt(val);
+            updateMutation.mutate(numVal);
+          }}
+        >
+          <SelectTrigger className="w-full h-8 text-sm">
+            <SelectValue placeholder="Select..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="null">None</SelectItem>
+            {options?.map(opt => (
+              <SelectItem key={opt.value} value={opt.value.toString()}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      );
+    }
+    
+    return (
+      <button
+        onClick={() => setIsEditing(true)}
+        className="text-muted-foreground italic text-sm hover:text-primary hover:underline"
+      >
+        Click to set
+      </button>
+    );
+  }
+
+  // Regular value display/edit
+  if (isEditing) {
+    const currentOption = options?.find(opt => opt.code === value);
+    
+    return (
+      <Select
+        defaultValue={currentOption?.value.toString()}
+        onValueChange={(val) => {
+          const numVal = val === 'null' ? null : parseInt(val);
+          updateMutation.mutate(numVal);
+        }}
+      >
+        <SelectTrigger className="w-full h-8 text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="null">None</SelectItem>
+          {options?.map(opt => (
+            <SelectItem key={opt.value} value={opt.value.toString()}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  const isMatch = value === expected;
+  
+  return (
+    <button
+      onClick={() => setIsEditing(true)}
+      className={`text-sm text-left hover:underline ${
+        isMatch ? 'text-green-600' : 'text-red-600 font-medium'
+      }`}
+    >
+      {value}
+    </button>
+  );
+}
+
+interface TruthTableProps {
+  initialPage?: number;
+  initialFilters?: {
+    stream?: string;
+    status?: string;
+  };
+}
+
+export default function TruthTableV4({ 
+  initialPage = 1, 
+  initialFilters = {} 
+}: TruthTableProps) {
+  const [page, setPage] = useState(initialPage);
+  const [filters, setFilters] = useState(initialFilters);
+  
+  const { data, isLoading, error } = useQuery<PaginatedResult<RosettaTruthRow>>({
+    queryKey: ['truth-data', page, filters],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: '50',
+        ...(filters.stream && { stream: filters.stream }),
+        ...(filters.status && { status: filters.status })
+      });
+      
+      const response = await fetch(`/api/truth/paginated?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch truth data');
+      return response.json();
+    },
+    keepPreviousData: true
+  });
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Failed to load truth data: {(error as Error).message}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-96 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
+  if (!data || data.data.length === 0) {
+    return (
+      <Alert>
+        <AlertDescription>
+          No data available. Try adjusting your filters.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Filters */}
+      <div className="flex gap-4">
+        <Select
+          value={filters.stream || 'all'}
+          onValueChange={(val) => {
+            setFilters({ ...filters, stream: val === 'all' ? undefined : val });
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All streams" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Streams</SelectItem>
+            <SelectItem value="WIN">WIN</SelectItem>
+            <SelectItem value="DELIVER">DELIVER</SelectItem>
+            <SelectItem value="COLLECT">COLLECT</SelectItem>
+            <SelectItem value="EXPAND">EXPAND</SelectItem>
+            <SelectItem value="TALENT">TALENT</SelectItem>
+            <SelectItem value="OPERATE">OPERATE</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.status || 'all'}
+          onValueChange={(val) => {
+            setFilters({ ...filters, status: val === 'all' ? undefined : val });
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="Aligned">Aligned</SelectItem>
+            <SelectItem value="Misattributed">Misattributed</SelectItem>
+            <SelectItem value="Not Observed">Not Observed</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-md border">
+        <table className="w-full">
+          <thead className="bg-muted/50">
+            <tr>
+              <th className="px-4 py-3 text-left text-sm font-medium">Stream</th>
+              <th className="px-4 py-3 text-left text-sm font-medium">Unit</th>
+              <th className="px-4 py-3 text-left text-sm font-medium">Expected Role</th>
+              <th className="px-4 py-3 text-left text-sm font-medium">Observed Role</th>
+              <th className="px-4 py-3 text-left text-sm font-medium">Expected Org</th>
+              <th className="px-4 py-3 text-left text-sm font-medium">Observed Org</th>
+              <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+              <th className="px-4 py-3 text-left text-sm font-medium">Evidence</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {data.data.map((row, idx) => {
+              // Parse unit_id from unit_code if needed
+              const unitId = parseInt(row.unit_code.split('-')[1]) || idx;
+              
+              return (
+                <tr key={`${row.unit_code}-${idx}`} className="hover:bg-muted/30">
+                  <td className="px-4 py-2">
+                    <Badge variant="outline" className="text-xs">
+                      {row.stream_code}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-2">
+                    <div>
+                      <div className="font-medium text-sm">{row.unit_code}</div>
+                      <div className="text-xs text-muted-foreground">{row.unit_name}</div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2 text-sm">{row.expected_role}</td>
+                  <td className="px-4 py-2">
+                    <OwnershipCell
+                      value={row.observed_role}
+                      expected={row.expected_role}
+                      type="role"
+                      unitId={unitId}
+                      field="role"
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-sm">{row.expected_org}</td>
+                  <td className="px-4 py-2">
+                    <OwnershipCell
+                      value={row.observed_org}
+                      expected={row.expected_org}
+                      type="org"
+                      unitId={unitId}
+                      field="org"
+                    />
+                  </td>
+                  <td className="px-4 py-2">
+                    <Badge
+                      variant={
+                        row.status === 'Aligned' ? 'default' :
+                        row.status === 'Not Observed' ? 'secondary' :
+                        'destructive'
+                      }
+                      className="text-xs"
+                    >
+                      {row.status}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-2">
+                    <div className="text-xs">
+                      <div>{row.evidence_count || 0} entries</div>
+                      {row.last_evidence_at && (
+                        <div className="text-muted-foreground">
+                          {new Date(row.last_evidence_at).toLocaleDateString()}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      <DataTablePagination
+        pageCount={data.pageCount}
+        currentPage={data.currentPage}
+        onPageChange={setPage}
+        pageSize={data.pageSize}
+        totalCount={data.totalCount}
+      />
+    </div>
+  );
+}
+
+================
+File: rosetta-console/lib/db.ts
+================
+import { Pool, PoolClient } from "pg";
+import { DatabaseError, TransactionClient } from "@/types/database";
+
+// Enhanced connection pool with proper sizing (v4 spec lines 748-798)
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgresql://localhost/elire_ops_1",
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+  // ssl: { rejectUnauthorized: false } // uncomment if needed for cloud DBs
+});
+
+// Basic query function with enhanced error handling
+export async function query<T = any>(sql: string, params?: any[]): Promise<T[]> {
+  const client = await pool.connect();
+  try {
+    const res = await client.query(sql, params);
+    return res.rows as T[];
+  } catch (error: any) {
+    throw new DatabaseError(
+      error.message || 'Database query failed',
+      error.code,
+      error.detail
+    );
+  } finally {
+    client.release();
+  }
+}
+
+// Transaction support for multi-table operations (v4 spec requirement)
+export async function withTransaction<T>(
+  callback: (client: PoolClient) => Promise<T>
+): Promise<T> {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error: any) {
+    await client.query('ROLLBACK');
+    throw new DatabaseError(
+      error.message || 'Transaction failed',
+      error.code,
+      error.detail
+    );
+  } finally {
+    client.release();
+  }
+}
+
+// Retry logic with exponential backoff (v4 spec lines 763-798)
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries = 3
+): Promise<T> {
+  let lastError: any;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Don't retry on validation errors
+      if (error.code === '23503' || error.code === '23502') {
+        throw new DatabaseError(
+          'Validation error',
+          error.code,
+          error.detail
+        );
+      }
+      
+      // Exponential backoff for connection errors
+      if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+        await new Promise(resolve => 
+          setTimeout(resolve, Math.pow(2, i) * 1000)
+        );
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+  
+  throw lastError;
+}
+
+// Helper: try primary query; on error, fallback query
+export async function queryWithFallback<T = any>(
+  primary: string, 
+  fallback: string, 
+  params?: any[]
+): Promise<T[]> {
+  try {
+    return await query<T>(primary, params);
+  } catch {
+    return await query<T>(fallback, params);
+  }
+}
+
+// Validate foreign key exists
+export async function validateForeignKey(
+  table: string,
+  column: string,
+  value: any,
+  client?: PoolClient
+): Promise<boolean> {
+  const queryFn = client ? client.query.bind(client) : query;
+  const result = await queryFn(
+    `SELECT 1 FROM ${table} WHERE ${column} = $1 LIMIT 1`,
+    [value]
+  );
+  return result.length > 0 || (result as any).rowCount > 0;
+}
+
+// Get a client for manual transaction control
+export async function getClient(): Promise<PoolClient> {
+  return pool.connect();
+}
+
+// Graceful shutdown
+export async function closePool(): Promise<void> {
+  await pool.end();
+}
+
+================
+File: rosetta-console/lib/queryClient.ts
+================
+import { QueryClient } from '@tanstack/react-query';
+
+// Query client configuration from v4 spec lines 684-707
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache for 5 minutes
+      staleTime: 5 * 60 * 1000,
+      // Keep in cache for 10 minutes
+      gcTime: 10 * 60 * 1000,
+      
+      // Retry failed requests with smart logic
+      retry: (failureCount, error: any) => {
+        // Don't retry on 404 errors
+        if (error?.status === 404) return false;
+        // Don't retry on validation errors
+        if (error?.status === 400) return false;
+        // Retry up to 3 times for other errors
+        return failureCount < 3;
+      },
+      
+      // Retry delay with exponential backoff
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      
+      // Background refetch settings
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: 'always',
+      
+      // Network mode
+      networkMode: 'offlineFirst',
+    },
+    mutations: {
+      // Retry mutations with exponential backoff
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    },
+  },
+});
+
+================
+File: rosetta-console/lib/utils.ts
+================
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+================
+File: rosetta-console/.env.example
+================
+DATABASE_URL=postgres://user:pass@host:5432/elire_ops_1
+
+================
+File: rosetta-console/components.json
+================
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "app/globals.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "registries": {}
+}
+
+================
+File: rosetta-console/next.config.js
+================
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    serverActions: {
+      allowedOrigins: ['*'],
+    },
+  },
+};
+module.exports = nextConfig;
+
+================
+File: rosetta-console/package.json
+================
+{
+  "name": "rosetta-console",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@tanstack/react-query": "^5.87.1",
+    "@tanstack/react-query-devtools": "^5.87.3",
+    "@tanstack/react-virtual": "^3.13.12",
+    "@types/pg": "^8.15.5",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.542.0",
+    "next": "14.2.5",
+    "pg": "^8.11.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-organizational-chart": "^2.2.0",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "20.12.12",
+    "@types/react": "18.2.79",
+    "@types/react-dom": "18.2.25",
+    "autoprefixer": "10.4.19",
+    "eslint": "8.56.0",
+    "eslint-config-next": "14.2.5",
+    "postcss": "8.4.38",
+    "tailwindcss": "3.4.9",
+    "typescript": "5.5.3"
+  }
+}
+
+================
+File: rosetta-console/postcss.config.js
+================
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+
+================
+File: rosetta-console/README.md
+================
+# Rosetta Console (Next.js + Postgres)
+
+A narrative-first UI that reveals **fiction vs reality** (Expected vs Observed ownership),
+connects **controllable drivers → outcomes**, and ties those decisions to **evidence** and **dollars**.
+
+## Quick start
+
+1) `cp .env.example .env.local` and set `DATABASE_URL` to your Postgres.
+2) Run the SQL build (1..7) and the optional **8-fixes.sql** for evidence + SG&A view.
+3) `npm i` then `npm run dev`
+
+## Pages
+
+- `/org` — Org tree with direct metrics (headcount, revenue, COS, GM%).  
+- `/streams` — Value stream tree; drill to /truth filtered by stream.  
+- `/truth` — **Expected vs Observed** with status chips and inline **Set Observed** (dropdowns).  
+- `/evidence` — Evidence log + add new proof (with actor/role/org capture).  
+- `/kpis` — Catalog with targets, latest, and update (auto-evidence).  
+- `/finance` — Direct vs **Allocated SG&A** (if `v_financial_rollup_with_sga` exists).
+
+## Endpoints
+
+- `POST /api/observed` — Append new observed owner; auto-logs evidence (append-only).  
+- `POST /api/evidence` — Log proof for a unit/subject/type; idempotent by natural key if index exists.  
+- `POST /api/kpi` — Add measurement; auto-logs evidence.  
+- `GET /api/truth-row?unitCode=WIN-03` — Return a single truth row after edits.
+
+## Design Notes
+
+- Observed ownership is **insert-only**; the latest row wins in the view, preserving history.  
+- Evidence is a **tiny, high-value** primitive that makes your case defensible.  
+- The UI reads **views** (`v_org_tree`, `v_stream_tree`, `v_rosetta_truth` or `v_misattribution_delta`, `v_observed_from_evidence`, `v_financial_rollup(_with_sga)`) so internal schema can evolve safely.
+
+================
+File: rosetta-console/tailwind.config.ts
+================
+import type { Config } from "tailwindcss";
+const config: Config = {
+    darkMode: ["class"],
+    content: [
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}"
+  ],
+  theme: {
+  	extend: {
+  		colors: {
+  			brand: {
+  				'50': '#eef6ff',
+  				'100': '#dbeafe',
+  				'200': '#bfdbfe',
+  				'300': '#93c5fd',
+  				'400': '#60a5fa',
+  				'500': '#3b82f6',
+  				'600': '#2563eb',
+  				'700': '#1d4ed8',
+  				'800': '#1e40af',
+  				'900': '#1e3a8a'
+  			},
+  			background: 'hsl(var(--background))',
+  			foreground: 'hsl(var(--foreground))',
+  			card: {
+  				DEFAULT: 'hsl(var(--card))',
+  				foreground: 'hsl(var(--card-foreground))'
+  			},
+  			popover: {
+  				DEFAULT: 'hsl(var(--popover))',
+  				foreground: 'hsl(var(--popover-foreground))'
+  			},
+  			primary: {
+  				DEFAULT: 'hsl(var(--primary))',
+  				foreground: 'hsl(var(--primary-foreground))'
+  			},
+  			secondary: {
+  				DEFAULT: 'hsl(var(--secondary))',
+  				foreground: 'hsl(var(--secondary-foreground))'
+  			},
+  			muted: {
+  				DEFAULT: 'hsl(var(--muted))',
+  				foreground: 'hsl(var(--muted-foreground))'
+  			},
+  			accent: {
+  				DEFAULT: 'hsl(var(--accent))',
+  				foreground: 'hsl(var(--accent-foreground))'
+  			},
+  			destructive: {
+  				DEFAULT: 'hsl(var(--destructive))',
+  				foreground: 'hsl(var(--destructive-foreground))'
+  			},
+  			border: 'hsl(var(--border))',
+  			input: 'hsl(var(--input))',
+  			ring: 'hsl(var(--ring))',
+  			chart: {
+  				'1': 'hsl(var(--chart-1))',
+  				'2': 'hsl(var(--chart-2))',
+  				'3': 'hsl(var(--chart-3))',
+  				'4': 'hsl(var(--chart-4))',
+  				'5': 'hsl(var(--chart-5))'
+  			}
+  		},
+  		borderRadius: {
+  			lg: 'var(--radius)',
+  			md: 'calc(var(--radius) - 2px)',
+  			sm: 'calc(var(--radius) - 4px)'
+  		}
+  	}
+  },
+  plugins: [require("tailwindcss-animate")],
+};
+export default config;
+
+================
+File: rosetta-console/tsconfig.json
+================
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "ES2020"
+    ],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "*"
+      ]
+    },
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+
+================
+File: UI-Design/ui-spec-v4.md
+================
+# UI Implementation Specification v4.0
+
+*Production-ready with performance optimizations and complete error handling*
+
+## 1. System Architecture
+
+### Technology Stack
+
+```yaml
+Frontend:
+  - Next.js 14.2.5 (App Router)
+  - TypeScript
+  - Tailwind CSS
+  - Shadcn/ui components
+  - React Query for data fetching
+  - Virtual scrolling for large datasets
+  
+Backend:
+  - PostgreSQL (local)
+  - Node.js API routes
+  - pg driver with connection pooling
+  - Transaction support for multi-table operations
+
+Key Patterns:
+  - Append-only writes for ownership
+  - Optimistic UI updates with rollback
+  - Server-side pagination with client-side caching
+  - Single user (no auth)
+  - Evidence logging for all meaningful changes
+  - Foreign key validation on all writes
+```
+
+### Database Views Contract (VERIFIED)
+
+```typescript
+// Core views that exist and are tested
+interface DatabaseViews {
+  // Core Rosetta views
+  'v_rosetta_stone_enhanced': RosettaEnhancedRow;
+  'v_rosetta_truth': RosettaTruthRow;
+  'v_misattribution_delta': MisattributionRow;
+  
+  // Tree navigation
+  'v_org_tree': OrgTreeNode;
+  'v_stream_tree': StreamTreeNode;
+  
+  // Financial views  
+  'v_financial_rollup': FinancialRow;
+  'v_financial_rollup_with_sga': FinancialWithSGARow;
+  
+  // Evidence and KPIs
+  'v_observed_from_evidence': EvidenceRow;
+  'v_stream_rollup': StreamOutcomeRow;
+  'v_kpi_rollup': KPIRollupRow;
+  
+  // UI Helper views (NEW in 10-ui-helpers.sql)
+  'v_role_options': DropdownOption;
+  'v_org_options': HierarchicalOption;
+  'v_stream_options': StreamOption;
+  'v_ownership_summary': OwnershipSummary;
+  
+  // Pagination function
+  'get_rosetta_truth_page': PaginatedTruthFunction;
+}
+```
+
+## 2. Page Specifications
+
+### `/truth` - Ownership Truth Table (WITH PAGINATION)
+
+#### Data Sources
+
+```typescript
+// Paginated data fetching
+async function getTruthData(
+  page: number = 1,
+  pageSize: number = 50,
+  filters?: {
+    stream?: string;
+    status?: string;
+  }
+) {
+  const offset = (page - 1) * pageSize;
+  
+  const result = await sql`
+    SELECT * FROM get_rosetta_truth_page(
+      ${pageSize}::int,
+      ${offset}::int,
+      ${filters?.stream}::text,
+      ${filters?.status}::text
+    )`;
+  
+  return {
+    data: result.rows,
+    totalCount: result.rows[0]?.total_count || 0,
+    pageCount: Math.ceil((result.rows[0]?.total_count || 0) / pageSize)
+  };
+}
+
+// Summary statistics
+async function getOwnershipSummary() {
+  return sql`SELECT * FROM v_ownership_summary ORDER BY stream`;
+}
+```
+
+#### Interactions with Validation
+
+```typescript
+// Ownership update with transaction and validation
+async function updateOwnership(
+  unitId: number,
+  field: 'role' | 'org',
+  value: number | null
+) {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // 1. Validate foreign key if not null
+    if (value !== null) {
+      const table = field === 'role' ? 'org_role' : 'org_unit';
+      const column = field === 'role' ? 'role_id' : 'org_unit_id';
+      
+      const exists = await client.query(
+        `SELECT 1 FROM ${table} WHERE ${column} = $1`,
+        [value]
+      );
+      
+      if (exists.rowCount === 0) {
+        throw new Error(`Invalid ${field} ID: ${value}`);
+      }
+    }
+    
+    // 2. Append to observed ownership
+    const columnName = field === 'role' 
+      ? 'accountable_role_id' 
+      : 'accountable_org_unit_id';
+    
+    await client.query(
+      `INSERT INTO unit_observed_ownership (
+        unit_id, observed_as_of, ${columnName}, source, confidence_pct, notes
+      ) VALUES ($1, NOW(), $2, 'UI', 1.0, $3)`,
+      [unitId, value, `Updated ${field} via Truth page`]
+    );
+    
+    // 3. Log evidence
+    await client.query(
+      `INSERT INTO evidence_log (
+        unit_id, subject_ref, evidence_type, system_ref, occurred_at, notes
+      ) VALUES ($1, $2, 'ownership_update', 'UI', NOW(), $3)`,
+      [unitId, `OWNERSHIP_${Date.now()}`, `Changed ${field} to ${value}`]
+    );
+    
+    await client.query('COMMIT');
+    return { success: true };
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+```
+
+#### NULL Handling
+
+```tsx
+// Component handles missing roles/orgs gracefully
+function OwnershipCell({ 
+  value, 
+  expected,
+  type,
+  onUpdate 
+}: OwnershipCellProps) {
+  const options = useQuery(
+    ['options', type],
+    () => fetch(`/api/options/${type}`).then(r => r.json())
+  );
+  
+  // Handle UNDEFINED expected ownership
+  if (expected === 'UNDEFINED') {
+    return (
+      <div className="text-muted-foreground italic">
+        Not defined in system
+      </div>
+    );
+  }
+  
+  // Handle NOT_SET observed ownership
+  if (value === 'NOT_SET') {
+    return (
+      <InlineEdit
+        value={null}
+        options={options.data || []}
+        placeholder="Click to set"
+        onSave={onUpdate}
+      />
+    );
+  }
+  
+  return (
+    <InlineEdit
+      value={value}
+      options={options.data || []}
+      onSave={onUpdate}
+    />
+  );
+}
+```
+
+### `/streams` - Value Stream Navigator (INCLUDES EXPAND)
+
+#### Data Sources
+
+```sql
+-- All 6 streams including EXPAND
+SELECT * FROM v_stream_tree 
+WHERE parent_id IS NULL
+ORDER BY order_in_parent;
+
+-- Stream-specific units
+SELECT * FROM v_rosetta_stone_enhanced
+WHERE stream_code = ${streamCode}
+ORDER BY order_in_stream;
+```
+
+#### Stream Cards
+
+```tsx
+function StreamGrid() {
+  const streams = [
+    { code: 'WIN', name: 'Win Work', icon: Trophy },
+    { code: 'DELIVER', name: 'Deliver Work', icon: Package },
+    { code: 'COLLECT', name: 'Collect Cash', icon: DollarSign },
+    { code: 'EXPAND', name: 'Expand Clients', icon: TrendingUp }, // NEW
+    { code: 'TALENT', name: 'Talent Engine', icon: Users },
+    { code: 'OPERATE', name: 'Operate Business', icon: Settings }
+  ];
+  
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {streams.map(stream => (
+        <StreamCard key={stream.code} {...stream} />
+      ))}
+    </div>
+  );
+}
+```
+
+### `/org` - Organization Hierarchy
+
+#### Dropdown Population
+
+```typescript
+// Use new helper views for dropdowns
+async function getOrgOptions() {
+  const result = await sql`
+    SELECT * FROM v_org_options 
+    ORDER BY depth, path`;
+  
+  return result.rows.map(row => ({
+    value: row.value,
+    label: row.label,
+    depth: row.depth,
+    code: row.code
+  }));
+}
+
+async function getRoleOptions() {
+  const result = await sql`
+    SELECT * FROM v_role_options`;
+  
+  return result.rows.map(row => ({
+    value: row.value,
+    label: row.label,
+    code: row.code
+  }));
+}
+```
+
+### `/evidence` - Evidence Log with Types
+
+#### Constrained Evidence Types
+
+```typescript
+// Evidence types are now constrained in database
+type EvidenceType = 
+  | 'ownership_update'
+  | 'kpi_measurement'
+  | 'pricing_decision'
+  | 'solution_outline'
+  | 'proposal_redline'
+  | 'recruit_req'
+  | 'scope_change'
+  | 'milestone_complete'
+  | 'invoice_adjustment';
+
+interface EvidenceFilters {
+  unit?: string;
+  type?: EvidenceType;
+  dateRange?: { from: Date; to: Date };
+  actor?: string;
+  stream?: string; // NEW: filter by stream
+}
+```
+
+### `/kpis` - KPI Management
+
+#### Batch Updates with Transaction
+
+```typescript
+async function updateKPITargets(
+  updates: Array<{
+    kpiId: number;
+    unitId?: number;
+    target: number;
+    yellowThreshold: number;
+    redThreshold: number;
+  }>
+) {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    for (const update of updates) {
+      // Validate KPI exists
+      const kpiExists = await client.query(
+        'SELECT 1 FROM kpi WHERE kpi_id = $1',
+        [update.kpiId]
+      );
+      
+      if (kpiExists.rowCount === 0) {
+        throw new Error(`Invalid KPI ID: ${update.kpiId}`);
+      }
+      
+      // Update or insert target
+      await client.query(`
+        INSERT INTO kpi_target (
+          kpi_id, unit_id, valid_from, target_value, 
+          threshold_yellow, threshold_red, scope
+        ) VALUES ($1, $2, CURRENT_DATE, $3, $4, $5, 
+          CASE WHEN $2 IS NULL THEN 'firm' ELSE 'unit' END)
+        ON CONFLICT (kpi_id, COALESCE(unit_id, 0), valid_from)
+        DO UPDATE SET
+          target_value = EXCLUDED.target_value,
+          threshold_yellow = EXCLUDED.threshold_yellow,
+          threshold_red = EXCLUDED.threshold_red
+      `, [
+        update.kpiId,
+        update.unitId,
+        update.target,
+        update.yellowThreshold,
+        update.redThreshold
+      ]);
+      
+      // Log evidence
+      if (update.unitId) {
+        await client.query(`
+          INSERT INTO evidence_log (
+            unit_id, subject_ref, evidence_type, 
+            system_ref, occurred_at, notes
+          ) VALUES ($1, $2, 'kpi_measurement', 'UI', NOW(), $3)
+        `, [
+          update.unitId,
+          `KPI_TARGET_${update.kpiId}`,
+          `Updated KPI target to ${update.target}`
+        ]);
+      }
+    }
+    
+    await client.query('COMMIT');
+    return { success: true };
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+```
+
+## 3. Component Library Updates
+
+### Pagination Component
+
+```typescript
+// components/DataTablePagination.tsx
+export function DataTablePagination({
+  pageCount,
+  currentPage,
+  onPageChange,
+  pageSize,
+  totalCount
+}: PaginationProps) {
+  return (
+    <div className="flex items-center justify-between px-2 py-4">
+      <div className="flex items-center space-x-2">
+        <p className="text-sm text-muted-foreground">
+          Showing {((currentPage - 1) * pageSize) + 1} to{' '}
+          {Math.min(currentPage * pageSize, totalCount)} of{' '}
+          {totalCount} results
+        </p>
+      </div>
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1}
+        >
+          First
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </Button>
+        <span className="text-sm">
+          Page {currentPage} of {pageCount}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === pageCount}
+        >
+          Next
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(pageCount)}
+          disabled={currentPage === pageCount}
+        >
+          Last
+        </Button>
+      </div>
+    </div>
+  );
+}
+```
+
+### Summary Dashboard Component
+
+```typescript
+// components/OwnershipSummary.tsx
+export function OwnershipSummary() {
+  const { data } = useQuery(['ownership-summary'], 
+    () => fetch('/api/summary/ownership').then(r => r.json())
+  );
+  
+  if (!data) return <Skeleton className="h-32" />;
+  
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {data.map((stream: any) => (
+        <Card key={stream.stream}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">{stream.stream_name}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {stream.alignment_pct}%
+            </div>
+            <div className="text-xs text-muted-foreground mt-1">
+              {stream.aligned} of {stream.total_units} aligned
+            </div>
+            {stream.misattributed > 0 && (
+              <Badge variant="destructive" className="mt-2">
+                {stream.misattributed} misattributed
+              </Badge>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+```
+
+## 4. API Endpoints with Validation
+
+### Enhanced API Security
+
+```typescript
+// api/observed-ownership/route.ts
+export async function POST(request: Request) {
+  const body = await request.json();
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // 1. Validate unit exists
+    const unitCheck = await client.query(
+      'SELECT 1 FROM atomic_unit WHERE unit_id = $1',
+      [body.unit_id]
+    );
+    
+    if (unitCheck.rowCount === 0) {
+      return NextResponse.json(
+        { error: 'Invalid unit_id' },
+        { status: 400 }
+      );
+    }
+    
+    // 2. Validate role if provided
+    if (body.accountable_role_id) {
+      const roleCheck = await client.query(
+        'SELECT 1 FROM org_role WHERE role_id = $1',
+        [body.accountable_role_id]
+      );
+      
+      if (roleCheck.rowCount === 0) {
+        return NextResponse.json(
+          { error: 'Invalid role_id' },
+          { status: 400 }
+        );
+      }
+    }
+    
+    // 3. Validate org if provided
+    if (body.accountable_org_unit_id) {
+      const orgCheck = await client.query(
+        'SELECT 1 FROM org_unit WHERE org_unit_id = $1',
+        [body.accountable_org_unit_id]
+      );
+      
+      if (orgCheck.rowCount === 0) {
+        return NextResponse.json(
+          { error: 'Invalid org_unit_id' },
+          { status: 400 }
+        );
+      }
+    }
+    
+    // 4. Allowlist fields
+    const allowed = [
+      'unit_id',
+      'accountable_role_id',
+      'accountable_org_unit_id',
+      'source',
+      'confidence_pct',
+      'notes'
+    ];
+    
+    const filtered = Object.keys(body)
+      .filter(key => allowed.includes(key))
+      .reduce((obj, key) => ({ ...obj, [key]: body[key] }), {});
+    
+    // 5. Insert ownership
+    const insertResult = await client.query(
+      `INSERT INTO unit_observed_ownership 
+       (unit_id, observed_as_of, accountable_role_id, 
+        accountable_org_unit_id, source, confidence_pct, notes)
+       VALUES ($1, NOW(), $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [
+        filtered.unit_id,
+        filtered.accountable_role_id || null,
+        filtered.accountable_org_unit_id || null,
+        filtered.source || 'UI',
+        filtered.confidence_pct || 1.0,
+        filtered.notes || null
+      ]
+    );
+    
+    // 6. Log evidence
+    await client.query(
+      `INSERT INTO evidence_log 
+       (unit_id, subject_ref, evidence_type, system_ref, occurred_at, notes)
+       VALUES ($1, $2, $3, $4, NOW(), $5)`,
+      [
+        filtered.unit_id,
+        `OBS_${insertResult.rows[0].obs_id}`,
+        'ownership_update',
+        'UI',
+        `Ownership updated via API`
+      ]
+    );
+    
+    await client.query('COMMIT');
+    
+    return NextResponse.json(insertResult.rows[0]);
+    
+  } catch (error: any) {
+    await client.query('ROLLBACK');
+    
+    return NextResponse.json(
+      { error: error.message || 'Database error' },
+      { status: 500 }
+    );
+    
+  } finally {
+    client.release();
+  }
+}
+```
+
+## 5. Database Setup Script
+
+```bash
+#!/bin/bash
+# setup-database.sh
+
+echo "Setting up Rosetta Console database..."
+
+# Run migrations in order
+for script in elire_ops_1/*.sql; do
+  echo "Running $script..."
+  psql -d $DATABASE_URL -f $script
+  if [ $? -ne 0 ]; then
+    echo "Error running $script"
+    exit 1
+  fi
+done
+
+echo "Running UI helpers..."
+psql -d $DATABASE_URL -f elire_ops_1/10-ui-helpers.sql
+
+echo "Validating setup..."
+psql -d $DATABASE_URL -c "SELECT * FROM v_ui_validation;"
+
+echo "Database setup complete!"
+```
+
+## 6. Performance Optimizations
+
+### Virtual Scrolling for Large Lists
+
+```typescript
+// Use @tanstack/react-virtual for large datasets
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+function VirtualizedUnitList({ units }: { units: any[] }) {
+  const parentRef = useRef<HTMLDivElement>(null);
+  
+  const virtualizer = useVirtualizer({
+    count: units.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 60,
+    overscan: 10
+  });
+  
+  return (
+    <div ref={parentRef} className="h-[600px] overflow-auto">
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualItem) => (
+          <div
+            key={virtualItem.key}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: `${virtualItem.size}px`,
+              transform: `translateY(${virtualItem.start}px)`,
+            }}
+          >
+            <UnitRow unit={units[virtualItem.index]} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+### Query Caching Strategy
+
+```typescript
+// lib/queryClient.ts
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Cache for 5 minutes
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
+      
+      // Retry failed requests
+      retry: (failureCount, error: any) => {
+        if (error?.status === 404) return false;
+        return failureCount < 3;
+      },
+      
+      // Background refetch
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: 'always'
+    }
+  }
+});
+```
+
+## 7. Implementation Checklist
+
+### Pre-Development Setup
+- [ ] Run `10-ui-helpers.sql` to add missing roles and helper views
+- [ ] Verify all views exist with `SELECT * FROM v_ui_validation`
+- [ ] Set up connection pool with proper size (10-20 connections)
+- [ ] Configure environment variables
+
+### Week 1: Core Functionality
+- [ ] Setup Next.js project with TypeScript and dependencies
+- [ ] Implement connection pool with transaction support
+- [ ] Build `/truth` page with pagination and NULL handling
+- [ ] Build `/streams` page including EXPAND stream
+- [ ] Build `/org` page with hierarchical dropdowns
+- [ ] Implement evidence logging for all updates
+- [ ] Add foreign key validation to all API endpoints
+
+### Week 2: Complete Implementation
+- [ ] Build `/evidence` page with constrained types
+- [ ] Build `/kpis` page with batch updates
+- [ ] Build `/finance` page with toggle views
+- [ ] Add ownership summary dashboard
+- [ ] Implement virtual scrolling for large datasets
+- [ ] Add comprehensive error handling
+- [ ] Performance test with 10k+ rows
+- [ ] Add loading states and skeletons
+- [ ] Implement optimistic updates with rollback
+
+### Week 3: Polish and Testing
+- [ ] Add data export functionality
+- [ ] Implement keyboard navigation
+- [ ] Add confirmation dialogs for destructive actions
+- [ ] Create user documentation
+- [ ] Performance profiling and optimization
+- [ ] Error boundary implementation
+- [ ] Accessibility audit (WCAG 2.1 AA)
+
+## 8. Error Handling Patterns
+
+### Database Connection Errors
+
+```typescript
+// lib/db.ts
+class DatabaseError extends Error {
+  constructor(
+    message: string,
+    public code?: string,
+    public detail?: string
+  ) {
+    super(message);
+    this.name = 'DatabaseError';
+  }
+}
+
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries = 3
+): Promise<T> {
+  let lastError: any;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+      
+      // Don't retry on validation errors
+      if (error.code === '23503' || error.code === '23502') {
+        throw new DatabaseError(
+          'Validation error',
+          error.code,
+          error.detail
+        );
+      }
+      
+      // Exponential backoff for connection errors
+      if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT') {
+        await new Promise(resolve => 
+          setTimeout(resolve, Math.pow(2, i) * 1000)
+        );
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+  
+  throw lastError;
+}
+```
+
+### UI Error Boundaries
+
+```typescript
+// components/ErrorBoundary.tsx
+export class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Error boundary caught:', error, errorInfo);
+    
+    // Send to error tracking service
+    if (typeof window !== 'undefined') {
+      // Track error
+    }
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Alert variant="destructive">
+          <AlertTitle>Something went wrong</AlertTitle>
+          <AlertDescription>
+            {this.state.error?.message || 'An unexpected error occurred'}
+          </AlertDescription>
+          <Button
+            onClick={() => window.location.reload()}
+            className="mt-4"
+          >
+            Reload Page
+          </Button>
+        </Alert>
+      );
+    }
+    
+    return this.props.children;
+  }
+}
+```
+
+## 9. Testing Utilities
+
+### Database Test Helpers
+
+```typescript
+// test/db-helpers.ts
+export async function seedTestData() {
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // Clear existing test data
+    await client.query(`
+      DELETE FROM unit_observed_ownership 
+      WHERE source = 'TEST'
+    `);
+    
+    // Add test observations
+    const units = await client.query(
+      'SELECT unit_id FROM atomic_unit LIMIT 5'
+    );
+    
+    for (const unit of units.rows) {
+      await client.query(`
+        INSERT INTO unit_observed_ownership
+        (unit_id, observed_as_of, accountable_role_id, source)
+        VALUES ($1, NOW(), 
+          (SELECT role_id FROM org_role LIMIT 1),
+          'TEST')
+      `, [unit.unit_id]);
+    }
+    
+    await client.query('COMMIT');
+    
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function cleanupTestData() {
+  await sql`
+    DELETE FROM unit_observed_ownership 
+    WHERE source = 'TEST'
+  `;
+  
+  await sql`
+    DELETE FROM evidence_log 
+    WHERE system_ref = 'TEST'
+  `;
+}
+```
+
+---
+
+================
 File: CLAUDE.md
 ================
 # CLAUDE.md
@@ -5381,6 +9897,437 @@ Key test scenarios:
 3. **Financial rollups**: Verify practice → COE → pillar aggregations
 4. **KPI cascade**: Update driver KPI, verify evidence creation
 5. **SG&A allocation**: Toggle between direct and allocated views, confirm reconciliation
+
+================
+File: Insights.md
+================
+**he Original Sin: The 2019/2020 Restructure That Missed the Mark**
+
+
+
+ • You created the pillar structure (Service Excellence, Client
+
+ Relationships, Finance & Operations, etc.) thinking it would drive
+
+ accountability - but it actually created more silos
+
+ • The pillars were run by non-partners (Tavia for Finance, Surma for HR,
+
+ Grant for Sales) while partners remained disconnected from operational
+
+ accountability
+
+ • You elevated back-office leads and made a commitment that "all arms of
+
+ Elire work together" but this actually created MORE overhead without true
+
+ accountability
+
+ • The fatal flaw: Pillars tracked metrics but nobody owned P&L outcomes -
+
+ you were measuring activity not results
+
+ • Each pillar created their own charters and initiatives but they were
+
+ done in isolation, creating 50+ initiatives that overwhelmed the
+
+ organization
+
+ • The SPI (Strategic Planning Initiative) framework looked good on paper
+
+ but became a bureaucratic exercise - partners would present, nod, then go
+
+ back to their silos
+
+
+
+ **The COE (Center of Excellence) Dysfunction Discovery**
+
+
+
+ • COEs became kingdoms - each partner protected their turf (Cloud,
+
+ On-Prem, EPM, Treasury)
+
+ • The COE model created artificial boundaries - clients didn't care about
+
+ your internal structure but suffered from it
+
+ • Practice leads had phantom P&Ls - they'd report numbers but had no real
+
+ accountability for profit
+
+ • Discovery: Practice leads shouldn't have P&Ls at all - they should focus
+
+  purely on delivery excellence
+
+ • The "matrixed" organization wasn't actually matrixed - it was just
+
+ confused reporting lines with no clear ownership
+
+
+
+ **The Ryan/Book of Business Revelations**
+
+
+
+ • Ryan was carrying massive revenue but wasn't being compensated or
+
+ recognized appropriately
+
+ • The concept of "book of business" was completely broken - some partners
+
+ claimed ownership of clients they barely touched
+
+ • You realized partners need to OWN client relationships with full P&L
+
+ accountability, not just "manage practices"
+
+ • The split between "sales partners" and "delivery partners" was
+
+ artificial and harmful
+
+ • Client partners should own the full lifecycle - sales through delivery
+
+ through managed services
+
+
+
+ **The Sales Dysfunction Epiphanies**
+
+
+
+ • Sales was organized by industry (Federal, State/Local, Commercial) but
+
+ delivery was organized by technology - complete mismatch
+
+ • Grant's sales organization was making promises delivery couldn't keep
+
+ because they weren't aligned
+
+ • The handoff between sales and delivery was a black hole - Friend would
+
+ close deals then throw them over the wall
+
+ • Pricing was wild west - same services priced 10 different ways with
+
+ margin variance of 15+ points
+
+ • No unified rate card meant every deal was a custom negotiation, killing
+
+ margins
+
+ • Contract reviews were ad-hoc - hidden liabilities would snowball and
+
+ bite you later
+
+
+
+ **The Contract and Commercial Model Problems**
+
+
+
+ • You discovered contracts were being signed without proper risk
+
+ assessment - especially on fixed-fee work
+
+ • No contract compliance capabilities - especially problematic with
+
+ Federal contracts requiring specific reporting
+
+ • The GSA contract and JV were underutilized because nobody understood how
+
+  to leverage them
+
+ • CMMC and NIST compliance requirements for Federal work weren't even on
+
+ the radar until too late
+
+ • Subcontractor agreements were leaking IP - 22% sub ratio with no
+
+ knowledge capture requirements
+
+
+
+ **The Strategic Planning Failures**
+
+
+
+ • Every year you'd do strategic planning but it was theater - present
+
+ pretty slides then go back to chaos
+
+ • The gap between strategy and execution was massive - no mechanism to
+
+ enforce strategic decisions
+
+ • Partners would agree in the room then undermine decisions through
+
+ inaction
+
+ • No consequences for missing strategic initiatives - they'd just roll to
+
+ next year
+
+ • The strategic pillars created more overhead (pillar heads, coordinators)
+
+  without driving results
+
+
+
+ **The Competency Center Concept Evolution**
+
+
+
+ • Initial thought: Create competency centers for technical excellence
+
+ • Reality: Competency without accountability is just overhead
+
+ • Evolution: Competency should be embedded in delivery, not a separate
+
+ structure
+
+ • The revelation: You need capability at the atomic level (specific
+
+ skills) not organizational level (departments)
+
+ • Competency centers became hiding places for non-billable resources
+
+
+
+ **The PMO/Methodology Chaos Recognition**
+
+
+
+ • 5 different practices with 5 different methodologies - clients
+
+ experienced completely different Elires
+
+ • PMO was a joke - 1 director and 2 coordinators for a $50M firm
+
+ • No unified project governance - each practice did their own thing
+
+ • The methodology existed as 800+ artifacts with no organizing principle -
+
+  tribal knowledge ruled
+
+ • Project managers were winging it - no standard gates, no consistent
+
+ quality checks
+
+
+
+ **The Financial/Margin Truth Bombs**
+
+
+
+ • Net margin at 7.7% when peers are at 15-20% - you're literally giving
+
+ away half your profit
+
+ • Conference spend of $800K-$1.2M with ZERO ROI tracking
+
+ • Discretionary spending with no governance - partners spending on their
+
+ pet projects
+
+ • Internal transfer pricing fights between practices destroying margins on
+
+  multi-practice deals
+
+ • No understanding of true delivery costs - couldn't price properly
+
+ because didn't know costs
+
+
+
+ **The Partner Compensation Awakening**
+
+
+
+ • The 2020 comp realignment removed incentives thinking base would rise
+
+ with success - massive mistake
+
+ • You personally went from significant comp to "almost nothing" despite
+
+ carrying 58% of revenue
+
+ • Partners being rewarded for tenure and overhead roles, not value
+
+ creation
+
+ • No tie between partner comp and actual business results
+
+ • The equity event will NEVER happen under current structure - no buyer
+
+ would touch this mess
+
+
+
+ **The Talent/HR Revelations**
+
+
+
+ • Career paths were fiction - no real advancement opportunities
+
+ • Promoting people to manager/director titles without changing
+
+ responsibilities - title inflation
+
+ • The associate program wasn't developing talent, just burning through
+
+ juniors
+
+ • No mentorship structure - remote work killed informal coaching
+
+ • Attrition bleeding both margin and IP - people leaving with client
+
+ relationships and knowledge
+
+
+
+ **The Technology/Systems Gaps**
+
+
+
+ • Certinia (PSA) underutilized - maybe 40% adoption
+
+ • No single source of truth for project data - spreadsheet hell
+
+ • Resource management via Slack at midnight - absolutely insane
+
+ • No BI/analytics capability - flying blind on all key metrics
+
+ • Master data quality so bad you couldn't trust any reports
+
+
+
+ **The Utilization/Resource Management Disaster**
+
+
+
+ • Utilization tracking was a lie - people backdating timesheets, gaming
+
+ the system
+
+ • No forward-looking resource management - purely reactive staffing
+
+ • Practices hoarding resources while others starved
+
+ • Bench time completely unproductive - no IP creation, no skill
+
+ development
+
+ • The myth of "billable utilization" - tracked hours but not value
+
+
+
+ **The Client Experience Fragmentation**
+
+
+
+ • Clients experienced 5 different Elires depending on which practice they
+
+ hit
+
+ • No unified client journey - from sales through delivery through managed
+
+ services
+
+ • Path to Cloud was a concept not an execution model
+
+ • Managed Services treated as an afterthought, not strategic annuity
+
+ stream
+
+ • No client success function - delivery ended and relationships died
+
+
+
+ **The Spring Partner Meeting Prep Discoveries**
+
+
+
+ • You realized you needed 80+ charters to fix everything - overwhelming
+
+ complexity
+
+ • The workshop prep revealed partners weren't aligned on even basic
+
+ problems
+
+ • Dot voting and consensus building were theater - no real decision making
+
+ • Partners would participate in exercises then ignore outcomes
+
+ • The EPM acquisition partners were wild cards - different culture,
+
+ different expectations
+
+
+
+ **The Final Crystallization: The Atomic Methodology Vision**
+
+
+
+ • Everything needs to tie to Oracle FSM Task IDs - canonical scope truth
+
+ • Atomic units small enough to be perfect, large enough to be valuable
+
+ • Stage × Lane × Type × Sequence - every artifact has an address
+
+ • Evidence over opinion - Oracle Success Navigator as the spine
+
+ • The revelation: Don't map dysfunction, force new structure
+
+ • Purpose-driven everything - if it doesn't have a clear purpose and exit
+
+ criteria, kill it
+
+
+
+ **What You're Trying to Prove**
+
+
+
+1. **The current structure is a value-destruction machine** - you're
+
+ subsidizing failure
+
+2. **Partners must own P&L or leave** - no more hiding in overhead roles
+3. **The atomic methodology is the differentiator** - beat Big 5 on clarity
+
+ and execution
+
+4. **Without restructure, everyone loses** - no exit, no growth, no future
+5. **You have both the diagnosis AND the cure** - not just complaining, but
+
+ solving
+
+6. **The time for consensus is over** - force change or walk away
+7. **The business model itself needs reimagining** - not just reorg but
+
+ transformation
+
+8. **Technology + methodology + governance must align** - three-legged stool
+9. **Client-centricity requires structural change** - current structure is
+
+ internally focused
+
+10. **Your revenue contribution gives you moral authority** - 58% means you
+
+ decide
+
+
+
+ The core thesis for Michael: The firm is structurally designed to fail.
+
+ Every system, process, and incentive drives the wrong behavior. You've
+
+ designed the solution but need either total buy-in or a clean break. The
+
+ status quo is literally bankrupting you while enriching passengers.
 
 ================
 File: README.md

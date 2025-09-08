@@ -1,38 +1,55 @@
-import SectionHeader from "@/components/SectionHeader";
-import TruthTable from "@/components/TruthTable";
-import { query, queryWithFallback } from "@/lib/db";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useState } from "react";
+import { OwnershipSummary } from "@/components/OwnershipSummary";
+import TruthTableV4 from "@/components/TruthTableV4";
 
-export default async function TruthPage({ searchParams }: { searchParams?: { stream?: string } }) {
-  const primary = `SELECT * FROM v_rosetta_truth ORDER BY stream_code, unit_code;`;
-  const fallback = `SELECT
-    stream        AS stream_code,
-    unit_code,
-    unit_name,
-    expected_role AS expected_role,
-    expected_org  AS expected_org,
-    observed_role AS observed_role,
-    observed_org  AS observed_org,
-    attribution_status AS status,
-    NULL::int as evidence_count,
-    NULL::timestamp as last_evidence_at
-  FROM v_misattribution_delta
-  ORDER BY stream, unit_code;`;
+// Updated Truth page with clickable summary filters (ui-fix.md Usability)
+export default function TruthPage({ 
+  searchParams 
+}: { 
+  searchParams?: { 
+    stream?: string;
+    status?: string;
+    page?: string;
+  } 
+}) {
+  const initialPage = searchParams?.page ? parseInt(searchParams.page) : 1;
+  const [filters, setFilters] = useState({
+    stream: searchParams?.stream,
+    status: searchParams?.status
+  });
 
-  const data = await queryWithFallback(primary, fallback);
-  const roles = await query(`SELECT code as value, name as label FROM org_role ORDER BY name;`);
-  const orgs  = await query(`SELECT code as value, name as label FROM org_unit ORDER BY name;`);
-
-  // Optionally pre-filter by stream
-  let filtered = data as any[];
-  const stream = searchParams?.stream;
-  if (stream) filtered = filtered.filter(r => r.stream_code === stream);
+  // Handle filter changes from summary cards
+  const handleFilterChange = (newFilters: { stream?: string; status?: string }) => {
+    setFilters(newFilters);
+  };
 
   return (
-    <div className="grid gap-4">
-      <SectionHeader title="Truth: Expected vs Observed" subtitle="See fiction vs reality, status, and evidence counts. Set observed owner with dropdowns." />
-      <TruthTable data={filtered} roles={roles as any[]} orgs={orgs as any[]} />
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold">Truth: Expected vs Observed</h1>
+        <p className="text-muted-foreground mt-2">
+          Compare expected ownership (fiction) with observed reality. 
+          Click any cell to update observed ownership. 
+          Evidence is automatically logged for all changes.
+        </p>
+      </div>
+
+      {/* Ownership Summary Dashboard with clickable filters */}
+      <OwnershipSummary onFilterChange={handleFilterChange} />
+
+      {/* Truth Table with Pagination */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6">
+          <h2 className="text-xl font-semibold mb-4">Ownership Details</h2>
+          <TruthTableV4 
+            initialPage={initialPage}
+            initialFilters={filters}
+          />
+        </div>
+      </div>
     </div>
   );
 }

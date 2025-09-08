@@ -1,4 +1,4 @@
-import Badge from "./Badge";
+import { Badge } from "./badge";
 
 type StatusBadgeProps = {
   status?: string | null;
@@ -11,8 +11,6 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     "Aligned": "success",
     "Misattributed": "error",
     "Not Observed": "warning",
-    "Role Mismatch": "error",
-    "Org Mismatch": "error",
   };
 
   return (
