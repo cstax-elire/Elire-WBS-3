@@ -1,0 +1,128 @@
+"use client";
+import { useMemo, useState } from "react";
+import Select from "./Select";
+import Button from "./Button";
+import StatusChip from "./StatusChip";
+
+type Row = {
+  unit_code: string;
+  unit_name: string;
+  stream_code: string;
+  expected_role?: string;
+  expected_org?: string;
+  observed_role?: string;
+  observed_org?: string;
+  status?: string;
+  evidence_count?: number;
+  last_evidence_at?: string;
+};
+
+type Opt = { value: string; label: string };
+
+export default function TruthTable({ data, roles, orgs }:
+  { data: Row[]; roles: Opt[]; orgs: Opt[]; }) {
+
+  const [rows, setRows] = useState<Row[]>(data);
+  const [filter, setFilter] = useState<{stream?: string; status?: string}>({});
+  const [pendingRole, setPendingRole] = useState<Record<string,string>>({});
+  const [pendingOrg, setPendingOrg] = useState<Record<string,string>>({});
+
+  const filtered = useMemo(() => rows.filter(r => 
+    (!filter.stream || r.stream_code===filter.stream) &&
+    (!filter.status || r.status===filter.status)
+  ), [rows, filter]);
+
+  async function saveObserved(unit_code: string, roleCode: string, orgCode: string) {
+    await fetch("/api/observed", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ unitCode: unit_code, roleCode, orgCode, notes: "Set via Rosetta UI" })
+    });
+    // refetch the updated row from server to recompute status accurately
+    const res = await fetch(`/api/truth-row?unitCode=${encodeURIComponent(unit_code)}`);
+    const updated = await res.json();
+    setRows(prev => prev.map(r => r.unit_code===unit_code ? updated : r));
+  }
+
+  return (
+    <div className="card">
+      <div className="card-header flex items-center justify-between">
+        <span>Truth Table — Expected vs Observed Ownership</span>
+        <div className="flex gap-2">
+          <Select placeholder="Filter by stream" options={[
+              ...Array.from(new Set(rows.map(r=>r.stream_code))).map(s=>({value:s,label:s}))
+            ]} onChange={(v)=>setFilter(f=>({...f, stream:v}))} />
+          <Select placeholder="Filter by status" options={[
+              "Aligned","Misattributed","Not Observed","Role Mismatch","Org Mismatch"
+            ].map(s=>({value:s,label:s}))} onChange={(v)=>setFilter(f=>({...f, status:v}))} />
+        </div>
+      </div>
+      <div className="card-body overflow-x-auto">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-left text-gray-600 border-b">
+              <th className="py-2 pr-3">Unit</th>
+              <th className="py-2 pr-3">Expected</th>
+              <th className="py-2 pr-3">Observed</th>
+              <th className="py-2 pr-3">Status</th>
+              <th className="py-2 pr-3">Evidence</th>
+              <th className="py-2 pr-3">Set Observed</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((r) => (
+              <tr key={r.unit_code} className="border-b last:border-0">
+                <td className="py-2 pr-3">
+                  <div className="font-medium">{r.unit_code}</div>
+                  <div className="text-gray-600">{r.unit_name}</div>
+                  <div className="text-xs text-gray-500">Stream: {r.stream_code}</div>
+                </td>
+                <td className="py-2 pr-3">
+                  <div className="font-mono">{r.expected_role}@{r.expected_org}</div>
+                </td>
+                <td className="py-2 pr-3">
+                  {r.observed_role ? (
+                    <div className="font-mono">{r.observed_role}@{r.observed_org}</div>
+                  ) : <span className="text-gray-500">—</span>}
+                </td>
+                <td className="py-2 pr-3"><StatusChip status={r.status}/></td>
+                <td className="py-2 pr-3">
+                  <div>{r.evidence_count || 0} items</div>
+                  {r.last_evidence_at && <div className="text-xs text-gray-500">{new Date(r.last_evidence_at).toLocaleString()}</div>}
+                </td>
+                <td className="py-2 pr-3">
+                  <div className="flex gap-2 items-center">
+                    <Select 
+                      placeholder="Role" 
+                      options={roles} 
+                      value={pendingRole[r.unit_code] || ''}
+                      onChange={(v) => setPendingRole(prev => ({...prev, [r.unit_code]: v}))} 
+                    />
+                    <Select 
+                      placeholder="Org" 
+                      options={orgs} 
+                      value={pendingOrg[r.unit_code] || ''}
+                      onChange={(v) => setPendingOrg(prev => ({...prev, [r.unit_code]: v}))} 
+                    />
+                    <Button onClick={() => {
+                      const roleCode = pendingRole[r.unit_code];
+                      const orgCode = pendingOrg[r.unit_code];
+                      if (roleCode && orgCode) {
+                        saveObserved(r.unit_code, roleCode, orgCode);
+                        // Clear the pending values after saving
+                        setPendingRole(prev => ({...prev, [r.unit_code]: ''}));
+                        setPendingOrg(prev => ({...prev, [r.unit_code]: ''}));
+                      } else {
+                        alert("Select role and org first.");
+                      }
+                    }}>Save</Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

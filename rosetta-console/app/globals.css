@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --radius: 8px;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900;
+}
+
+.container {
+  @apply mx-auto max-w-7xl px-4;
+}
+
+/* simple status badge styles */
+.badge {
+  @apply inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold;
+}
+.badge-green { @apply bg-green-100 text-green-800; }
+.badge-red { @apply bg-red-100 text-red-800; }
+.badge-yellow { @apply bg-yellow-100 text-yellow-800; }
+
+.card {
+  @apply bg-white rounded-xl shadow border border-gray-200;
+}
+.card-header { @apply px-4 py-3 border-b border-gray-100 font-semibold; }
+.card-body { @apply p-4; }

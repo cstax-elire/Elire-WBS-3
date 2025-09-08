@@ -1,0 +1,37 @@
+{
+  "include": [
+    "**/*.sql",
+    "**/*.md",
+    "rosetta-console/app/**",
+    "rosetta-console/components/**",
+    "rosetta-console/lib/**",
+    "rosetta-console/public/**",
+    "rosetta-console/*.js",
+    "rosetta-console/*.ts",
+    "rosetta-console/*.json",
+    "rosetta-console/.env.example",
+    "elire_ops_1/**/*.sql",
+    "background/**/*.md",
+    "*.md"
+  ],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": [
+      "**/node_modules/**",
+      "**/.next/**",
+      "**/out/**",
+      "**/.env.local",
+      "**/.env",
+      "**/package-lock.json",
+      "**/.DS_Store",
+      "**/repomix-output.txt",
+      "**/repomix-output.md",
+      "**/*.log",
+      "**/.git/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/ps-maturity-benchmark-2024.md"
+    ]
+  }
+}
