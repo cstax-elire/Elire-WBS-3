@@ -2,12 +2,14 @@
 
 ## Current Documentation
 
-### Core References
-- **[database-design.md](database-design.md)** - Complete database architecture and design
+### Primary References
+- **[DatabaseDesign.md](DatabaseDesign.md)** ⭐ **AUTHORITATIVE** - Complete implementation guide with business logic, financial allocations, and validation approach
+- **[database-architecture.md](database-architecture.md)** - ERD and structural overview (tables, relationships, views)
 - **[table-reference.md](table-reference.md)** - Detailed specifications for all 21 tables
 - **[../README.md](../README.md)** - Quick start guide and operational instructions
 
-### Implementation History
+### Implementation Details
+- **[implementation-notes.md](implementation-notes.md)** - Financial reallocation logic, validation approach, known gaps
 - **[migration-log.md](migration-log.md)** - Record of 2025-09-09 directory reorganization
 - **[DesignDecisions.md](DesignDecisions.md)** - Original design rationale (historical reference)
 
@@ -16,11 +18,14 @@
 
 ## Quick Navigation
 
-### For Developers
-Start with the [README](../README.md) for setup instructions, then reference [table-reference.md](table-reference.md) for detailed schema information.
+### For Understanding the System
+Start with [DatabaseDesign.md](DatabaseDesign.md) for the complete implementation story, including business logic and validation.
 
-### For Database Design
-Review [database-design.md](database-design.md) for architecture overview and ERD.
+### For Developers
+Review [database-architecture.md](database-architecture.md) for ERD and structure, then [table-reference.md](table-reference.md) for schema details.
+
+### For Operations
+See [../README.md](../README.md) for setup instructions and [implementation-notes.md](implementation-notes.md) for gotchas and gaps.
 
 ### For Historical Context
 See [DesignDecisions.md](DesignDecisions.md) for original design thinking and [migration-log.md](migration-log.md) for structural changes.
