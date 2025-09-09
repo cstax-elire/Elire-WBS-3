@@ -1,34 +1,46 @@
+"use client";
+
+import { useQuery } from "@tanstack/react-query";
 import StreamGrid from "@/components/StreamGrid";
-import { query } from "@/lib/db";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const dynamic = "force-dynamic";
+export default function StreamsPage() {
+  // Use API endpoint to honor view-only contract
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["streams"],
+    queryFn: async () => {
+      const response = await fetch("/api/streams");
+      if (!response.ok) throw new Error("Failed to fetch streams");
+      return response.json();
+    },
+  });
 
-export default async function StreamsPage() {
-  // Query includes all 6 streams including EXPAND (v4 spec lines 213-250)
-  const data = await query(`
-    SELECT
-      s.code,
-      s.name,
-      s.stream_id,
-      s.is_enabler,
-      COUNT(DISTINCT au.unit_id) as unit_count,
-      COUNT(DISTINCT CASE WHEN obs.unit_id IS NOT NULL THEN au.unit_id END) as units_with_ownership,
-      ROUND(
-        100.0 * COUNT(DISTINCT CASE WHEN obs.unit_id IS NOT NULL THEN au.unit_id END) / 
-        NULLIF(COUNT(DISTINCT au.unit_id), 0), 
-        1
-      ) as coverage_pct
-    FROM stream s
-    LEFT JOIN atomic_unit au ON au.stream_id = s.stream_id
-    LEFT JOIN LATERAL (
-      SELECT unit_id FROM unit_observed_ownership 
-      WHERE unit_id = au.unit_id 
-      LIMIT 1
-    ) obs ON true
-    WHERE s.parent_id IS NULL
-    GROUP BY s.stream_id, s.code, s.name, s.is_enabler, s.order_in_parent
-    ORDER BY s.order_in_parent;
-  `);
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Value Streams</h1>
+          <p className="text-muted-foreground">Loading streams...</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-48" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Value Streams</h1>
+          <p className="text-red-500">Failed to load streams. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -38,7 +50,7 @@ export default async function StreamsPage() {
           Navigate all six value streams including the EXPAND stream. Click any stream to see its atomic units and ownership details.
         </p>
       </div>
-      <StreamGrid streams={data as any[]} />
+      <StreamGrid streams={data || []} />
     </div>
   );
 }

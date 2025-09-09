@@ -56,10 +56,12 @@ background/
   Analysis.md
   DatabaseDesign.md
   Elire.md
+  Journey.md
   The AI Lens- From Organizational Chaos to AI-Ready Excellence.md
 elire_ops_1/
   1-tables_and_types.sql
   10-ui-helpers-sql.sql
+  11-ui-fix-status-model.sql
   2-seed.sql
   3-value_streams_systems_attribution.sql
   4-kpis_and_targets.sql
@@ -72,12 +74,21 @@ elire_ops_1/
 rosetta-console/
   app/
     api/
+      evidence/
+        route.ts
+      finance/
+        route.ts
+      kpis/
+        route.ts
       observed-ownership/
         route.ts
       options/
         [type]/
           route.ts
       streams/
+        [code]/
+          units/
+            route.ts
         route.ts
       summary/
         ownership/
@@ -116,6 +127,8 @@ rosetta-console/
       skeleton.tsx
       StatusBadge.tsx
       Tabs.tsx
+      toggle-group.tsx
+      toggle.tsx
       Tooltip.tsx
     ComingSoon.tsx
     DataTablePagination.tsx
@@ -123,7 +136,7 @@ rosetta-console/
     OwnershipSummary.tsx
     Providers.tsx
     StatusChip.tsx
-    StreamDetailView.tsx
+    StreamDetailClient.tsx
     StreamGrid.tsx
     StreamOutcomes.tsx
     TruthTableV4.tsx
@@ -140,10 +153,11 @@ rosetta-console/
   tailwind.config.ts
   tsconfig.json
 UI-Design/
+  ui-fix.md
   ui-spec-v4.md
 CLAUDE.md
-Insights.md
 README.md
+ToDO.md
 
 ================================================================
 Files
@@ -2513,6 +2527,65 @@ Client Relationships has 3 main departments -  Sales, Marketing, and Proposal ma
 | Other I&E               | 214,000     |
 
 ================
+File: background/Journey.md
+================
+# The Value Stream
+
+
+
+```
+ENABLERS: Talent (people/skills)  •  Operate (tools/process/admin)
+
+1) SELL (“Win the right work at the right price”)
+   - Understand the client’s problem
+   - Shape a solution we can actually deliver
+   - Set price and terms we can live with
+
+2) DELIVER (“Do the work as promised”)
+   - Staff the team
+   - Control changes (change orders)
+   - Hit dates and quality
+
+3) COLLECT (“Turn work into cash”)
+   - Bill cleanly and on time
+   - Fix invoice issues fast
+   - Drive down days to cash
+
+4) EXPAND (“Grow the relationship”)
+   - Earn advocacy
+   - Land follow-on work the team can deliver profitably
+```
+
+Each step has a few **small, concrete pieces of work** (think: “shape the solution,” “set the price,” “capture scope changes”) with one **clearly accountable owner**. These are the jobs where decision rights must sit.
+
+# Misattribution (why we lose money)
+
+- **What’s happening:** Sales-step work is landing on Delivery leaders (solution shaping, pricing, even approvals). Delivery-step work like change-order capture is inconsistent.
+- **Why it matters:**
+  - When Delivery shapes solutions and helps Sales price, the deal “wins”—but we lose margin later.
+  - When change orders aren’t captured in Delivery, we give away free work.
+  - When invoices bounce in Collect, cash slows and time goes to firefighting.
+
+**The fix:** Put each decision back where it belongs, and measure the few dials that prove it’s working.
+
+# The Dials (you can move these weekly)
+
+- **Sales (SELL) dials:**
+  - How long it takes to get a real solution outline approved
+  - How often we discount and how long discount approvals take
+- **Delivery (DELIVER) dials:**
+  - How much scope we capture instead of giving away (“% of changes turned into change orders”)
+  - Hitting dates (on-time delivery rate)
+- **Collect (COLLECT) dials:**
+  - Invoice error rate
+  - Days to cash
+- **Enablers:**
+  - Time to fill a role
+  - % of people aligned to the right skills
+
+These dials roll up to the outcomes we care about: **win rate, sold margin, realization (did we keep the margin), on-time delivery, and DSO (cash speed).**
+
+================
 File: background/The AI Lens- From Organizational Chaos to AI-Ready Excellence.md
 ================
 # **The AI Lens: From Organizational Chaos to AI-Ready Excellence**
@@ -3328,6 +3401,117 @@ COMMIT;
 
 -- Run validation
 SELECT * FROM v_ui_validation;
+
+================
+File: elire_ops_1/11-ui-fix-status-model.sql
+================
+-- UI Fix: Align status model to use single 'Misattributed' status (ui-fix.md recommendation A Option 1)
+-- This fixes the critical bug where filters and summaries expect 'Role Mismatch'/'Org Mismatch' 
+-- but v_rosetta_truth only returns 'Misattributed'
+
+-- Fix get_rosetta_truth_page function to correctly filter on 'Misattributed' status
+CREATE OR REPLACE FUNCTION get_rosetta_truth_page(
+  page_size INT DEFAULT 50,
+  page_offset INT DEFAULT 0,
+  filter_stream TEXT DEFAULT NULL,
+  filter_status TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+  unit_code TEXT,
+  unit_name TEXT,
+  stream_code TEXT,
+  expected_role TEXT,
+  expected_org TEXT,
+  observed_role TEXT,
+  observed_org TEXT,
+  status TEXT,
+  evidence_count BIGINT,
+  last_evidence_at TIMESTAMP WITH TIME ZONE,
+  total_count BIGINT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  WITH filtered_data AS (
+    SELECT
+      vrt.unit_code,
+      vrt.unit_name,
+      vrt.stream_code,
+      vrt.expected_role,
+      vrt.expected_org,
+      vrt.observed_role,
+      vrt.observed_org,
+      vrt.status,
+      vrt.evidence_count,
+      vrt.last_evidence_at
+    FROM v_rosetta_truth vrt
+    WHERE
+      (filter_stream IS NULL OR vrt.stream_code = filter_stream)
+      AND (filter_status IS NULL OR vrt.status = filter_status)  -- Fixed: direct status comparison
+  ),
+  counted AS (
+    SELECT *, COUNT(*) OVER() as total
+    FROM filtered_data
+  )
+  SELECT
+    c.unit_code,
+    c.unit_name,
+    c.stream_code,
+    c.expected_role,
+    c.expected_org,
+    c.observed_role,
+    c.observed_org,
+    c.status,
+    c.evidence_count,
+    c.last_evidence_at,
+    c.total
+  FROM counted c
+  ORDER BY c.stream_code, c.unit_code
+  LIMIT page_size
+  OFFSET page_offset;
+END;
+$$;
+
+-- Fix v_ownership_summary to correctly count 'Misattributed' status
+CREATE OR REPLACE VIEW v_ownership_summary AS
+WITH status_counts AS (
+  SELECT 
+    stream_code,
+    COUNT(*) AS total_units,
+    COUNT(*) FILTER (WHERE status = 'Aligned') AS aligned_count,
+    COUNT(*) FILTER (WHERE status = 'Misattributed') AS misattributed_count,  -- Fixed: use 'Misattributed'
+    COUNT(*) FILTER (WHERE status = 'Not Observed') AS not_observed_count
+  FROM v_rosetta_truth
+  GROUP BY stream_code
+)
+SELECT 
+  s.code AS stream,
+  s.name AS stream_name,
+  COALESCE(sc.total_units, 0) AS total_units,
+  COALESCE(sc.aligned_count, 0) AS aligned,
+  COALESCE(sc.misattributed_count, 0) AS misattributed,
+  COALESCE(sc.not_observed_count, 0) AS not_observed,
+  CASE 
+    WHEN COALESCE(sc.total_units, 0) > 0 
+    THEN ROUND(100.0 * sc.aligned_count / sc.total_units, 1)
+    ELSE 0
+  END AS alignment_pct
+FROM stream s
+LEFT JOIN status_counts sc ON sc.stream_code = s.code
+WHERE s.parent_id IS NULL  -- Top-level streams only
+ORDER BY s.order_in_parent;
+
+-- Verify the fix
+SELECT 'Status values in v_rosetta_truth:' as check_name;
+SELECT DISTINCT status FROM v_rosetta_truth;
+
+SELECT 'Ownership summary with fixed counting:' as check_name;
+SELECT * FROM v_ownership_summary;
+
+SELECT 'Test pagination with Misattributed filter:' as check_name;
+SELECT COUNT(*) as misattributed_count 
+FROM get_rosetta_truth_page(50, 0, NULL, 'Misattributed');
 
 ================
 File: elire_ops_1/2-seed.sql
@@ -5596,6 +5780,327 @@ Each **atomic unit** (e.g., “WIN-03 Pricing & Margin Decision”) carries:
 This design deliberately **does not overcomplicate the schema**, but it **does** encode the critical connections you asked for so that **trees, rollups, and attribution** appear naturally once you start editing observed ownership and loading actuals. It is purpose-built to **prove** the story you’ve been telling: *who really owns the work, how that affects outcomes and dollars, and where to move accountability so leadership is measured by ends and controllable drivers—not by surveys or anecdotes.*
 
 ================
+File: rosetta-console/app/api/evidence/route.ts
+================
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+
+export interface EvidenceRow {
+  evidence_id: number;
+  unit_id: number;
+  unit_code: string;
+  unit_name: string;
+  stream_code: string;
+  stream_name: string;
+  subject_ref: string;
+  evidence_type: string;
+  system_ref: string;
+  occurred_at: string;
+  notes: string;
+  actor_person_id: number | null;
+  actor_name: string | null;
+  actor_role: string | null;
+  actor_org: string | null;
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    
+    // Parse filters
+    const unitCode = searchParams.get('unit');
+    const evidenceType = searchParams.get('type');
+    const streamCode = searchParams.get('stream');
+    const dateFrom = searchParams.get('from');
+    const dateTo = searchParams.get('to');
+    const limit = parseInt(searchParams.get('limit') || '100');
+    
+    // Build query using v_observed_from_evidence (ui-fix.md Section E)
+    let whereConditions = [];
+    let params = [];
+    let paramIndex = 1;
+    
+    if (unitCode) {
+      whereConditions.push(`unit_code = $${paramIndex++}`);
+      params.push(unitCode);
+    }
+    
+    if (evidenceType) {
+      whereConditions.push(`evidence_type = $${paramIndex++}`);
+      params.push(evidenceType);
+    }
+    
+    if (streamCode) {
+      whereConditions.push(`stream_code = $${paramIndex++}`);
+      params.push(streamCode);
+    }
+    
+    if (dateFrom) {
+      whereConditions.push(`occurred_at >= $${paramIndex++}`);
+      params.push(dateFrom);
+    }
+    
+    if (dateTo) {
+      whereConditions.push(`occurred_at <= $${paramIndex++}`);
+      params.push(dateTo);
+    }
+    
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}` 
+      : '';
+    
+    const result = await query<EvidenceRow>(`
+      SELECT 
+        evidence_id,
+        unit_id,
+        unit_code,
+        unit_name,
+        stream_code,
+        stream_name,
+        subject_ref,
+        evidence_type,
+        system_ref,
+        occurred_at,
+        notes,
+        actor_person_id,
+        actor_name,
+        actor_role,
+        actor_org
+      FROM v_observed_from_evidence
+      ${whereClause}
+      ORDER BY occurred_at DESC
+      LIMIT $${paramIndex}
+    `, [...params, limit]);
+    
+    return NextResponse.json(result);
+    
+  } catch (error: any) {
+    console.error('Failed to fetch evidence:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch evidence data' },
+      { status: 500 }
+    );
+  }
+}
+
+================
+File: rosetta-console/app/api/finance/route.ts
+================
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+
+export interface FinancialRow {
+  org_unit_id: number;
+  org_code: string;
+  org_name: string;
+  org_type: string;
+  parent_org_id: number | null;
+  parent_org_code: string | null;
+  parent_org_name: string | null;
+  headcount: number;
+  revenue: number;
+  direct_cost: number;
+  gross_margin: number;
+  gross_margin_pct: number;
+  sga_allocation: number | null;
+  operating_income: number | null;
+  operating_margin_pct: number | null;
+  period_month: string;
+  fact_type: string;
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    
+    // Parse query params
+    const view = searchParams.get('view') || 'direct'; // 'direct' or 'allocated'
+    const orgType = searchParams.get('org_type');
+    const parentOrg = searchParams.get('parent_org');
+    const period = searchParams.get('period');
+    
+    // Choose view based on toggle (ui-fix.md Section E)
+    const viewName = view === 'allocated' 
+      ? 'v_financial_rollup_with_sga' 
+      : 'v_financial_rollup';
+    
+    // Build query with filters
+    let whereConditions = [];
+    let params = [];
+    let paramIndex = 1;
+    
+    if (orgType) {
+      whereConditions.push(`org_type = $${paramIndex++}`);
+      params.push(orgType);
+    }
+    
+    if (parentOrg) {
+      whereConditions.push(`parent_org_code = $${paramIndex++}`);
+      params.push(parentOrg);
+    }
+    
+    if (period) {
+      whereConditions.push(`period_month = $${paramIndex++}`);
+      params.push(period);
+    }
+    
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}` 
+      : '';
+    
+    // Fetch financial data from the appropriate view
+    const result = await query<FinancialRow>(`
+      SELECT 
+        org_unit_id,
+        org_code,
+        org_name,
+        org_type,
+        parent_org_id,
+        parent_org_code,
+        parent_org_name,
+        headcount,
+        revenue,
+        direct_cost,
+        gross_margin,
+        gross_margin_pct,
+        ${view === 'allocated' 
+          ? 'sga_allocation, operating_income, operating_margin_pct,'
+          : 'NULL as sga_allocation, NULL as operating_income, NULL as operating_margin_pct,'
+        }
+        period_month,
+        fact_type
+      FROM ${viewName}
+      ${whereClause}
+      ORDER BY 
+        org_type DESC,  -- Pillar first, then COE, then Practice
+        parent_org_code NULLS FIRST,
+        org_name
+    `, params);
+    
+    return NextResponse.json(result);
+    
+  } catch (error: any) {
+    console.error('Failed to fetch financial data:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch financial data' },
+      { status: 500 }
+    );
+  }
+}
+
+================
+File: rosetta-console/app/api/kpis/route.ts
+================
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+
+export interface KPIRow {
+  kpi_id: number;
+  kpi_code: string;
+  kpi_name: string;
+  kpi_description: string;
+  kpi_type: 'leading' | 'lagging';
+  agg_type: 'SUM' | 'RATIO_OF_SUMS' | 'WEIGHTED_AVG';
+  unit_of_measure: string;
+  current_value: number | null;
+  target_value: number | null;
+  threshold_yellow: number | null;
+  threshold_red: number | null;
+  status: 'green' | 'yellow' | 'red' | 'unknown';
+  last_measured: string | null;
+  stream_code: string | null;
+  unit_code: string | null;
+}
+
+export async function GET() {
+  try {
+    // Get KPI rollup data from v_kpi_rollup (ui-fix.md Section E)
+    const result = await query<KPIRow>(`
+      SELECT 
+        kr.kpi_id,
+        k.code as kpi_code,
+        k.name as kpi_name,
+        k.description as kpi_description,
+        k.kpi_type,
+        k.agg_type,
+        k.unit_of_measure,
+        kr.current_value,
+        kr.target_value,
+        kr.threshold_yellow,
+        kr.threshold_red,
+        CASE 
+          WHEN kr.current_value IS NULL THEN 'unknown'
+          WHEN kr.current_value >= kr.target_value THEN 'green'
+          WHEN kr.current_value >= kr.threshold_yellow THEN 'yellow'
+          WHEN kr.current_value >= kr.threshold_red THEN 'red'
+          ELSE 'red'
+        END as status,
+        kr.last_measured,
+        kr.stream_code,
+        kr.unit_code
+      FROM v_kpi_rollup kr
+      JOIN kpi k ON k.kpi_id = kr.kpi_id
+      ORDER BY k.kpi_type DESC, kr.stream_code, k.name
+    `);
+    
+    return NextResponse.json(result);
+    
+  } catch (error: any) {
+    console.error('Failed to fetch KPI data:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch KPI data' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST endpoint to record KPI measurements
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { kpi_id, unit_id, measured_value, notes } = body;
+    
+    // Validate required fields
+    if (!kpi_id || measured_value === undefined) {
+      return NextResponse.json(
+        { error: 'kpi_id and measured_value are required' },
+        { status: 400 }
+      );
+    }
+    
+    // Insert KPI measurement
+    const result = await query(`
+      INSERT INTO kpi_measurement (
+        kpi_id, unit_id, measured_as_of, measured_value, notes
+      ) VALUES ($1, $2, NOW(), $3, $4)
+      RETURNING *
+    `, [kpi_id, unit_id || null, measured_value, notes || null]);
+    
+    // Log evidence
+    if (unit_id) {
+      await query(`
+        INSERT INTO evidence_log (
+          unit_id, subject_ref, evidence_type, system_ref, occurred_at, notes
+        ) VALUES ($1, $2, 'kpi_measurement', 'UI', NOW(), $3)
+      `, [
+        unit_id,
+        `KPI_${kpi_id}_${Date.now()}`,
+        `KPI ${kpi_id} measured: ${measured_value}`
+      ]);
+    }
+    
+    return NextResponse.json(result[0]);
+    
+  } catch (error: any) {
+    console.error('Failed to record KPI measurement:', error);
+    return NextResponse.json(
+      { error: 'Failed to record measurement' },
+      { status: 500 }
+    );
+  }
+}
+
+================
 File: rosetta-console/app/api/observed-ownership/route.ts
 ================
 import { NextResponse } from 'next/server';
@@ -5603,14 +6108,16 @@ import { withTransaction, validateForeignKey } from '@/lib/db';
 import { ObservedOwnershipRequest } from '@/types/database';
 import { z } from 'zod';
 
-// Schema validation for request body
+// Schema validation for request body (ui-fix.md Section B - added actor and idempotency)
 const observedOwnershipSchema = z.object({
   unit_id: z.number(),
   accountable_role_id: z.number().nullable().optional(),
   accountable_org_unit_id: z.number().nullable().optional(),
   source: z.string().optional().default('UI'),
   confidence_pct: z.number().min(0).max(1).optional().default(1.0),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  actor_person_id: z.number().optional(),  // Actor capture
+  idempotency_key: z.string().optional()   // Idempotency support
 });
 
 // Enhanced API implementation from v4 spec lines 493-605
@@ -5688,19 +6195,49 @@ export async function POST(request: Request) {
         ]
       );
 
-      // 5. Log evidence
-      await client.query(
-        `INSERT INTO evidence_log 
-         (unit_id, subject_ref, evidence_type, system_ref, occurred_at, notes)
-         VALUES ($1, $2, $3, $4, NOW(), $5)`,
-        [
-          data.unit_id,
-          `OBS_${insertResult.rows[0].obs_id}`,
-          'ownership_update',
-          'UI',
-          `Ownership updated via API: ${data.notes || 'No notes'}`
-        ]
-      );
+      // 5. Log evidence with actor and idempotency (ui-fix.md Section B)
+      const subjectRef = data.idempotency_key || `OBS_${insertResult.rows[0].obs_id}`;
+      
+      // Check for existing evidence with same idempotency key
+      if (data.idempotency_key) {
+        const existingEvidence = await client.query(
+          `SELECT 1 FROM evidence_log WHERE subject_ref = $1 LIMIT 1`,
+          [subjectRef]
+        );
+        
+        if (existingEvidence.rowCount === 0) {
+          // Only insert if no existing evidence with this key
+          await client.query(
+            `INSERT INTO evidence_log 
+             (unit_id, subject_ref, evidence_type, system_ref, occurred_at, notes, actor_person_id)
+             VALUES ($1, $2, $3, $4, NOW(), $5, $6)
+             ON CONFLICT (unit_id, subject_ref, evidence_type) DO NOTHING`,
+            [
+              data.unit_id,
+              subjectRef,
+              'ownership_update',
+              'UI',
+              `Ownership updated via API: ${data.notes || 'No notes'}`,
+              data.actor_person_id || 1  // Default to person_id 1 for single-user mode
+            ]
+          );
+        }
+      } else {
+        // No idempotency key - always insert
+        await client.query(
+          `INSERT INTO evidence_log 
+           (unit_id, subject_ref, evidence_type, system_ref, occurred_at, notes, actor_person_id)
+           VALUES ($1, $2, $3, $4, NOW(), $5, $6)`,
+          [
+            data.unit_id,
+            subjectRef,
+            'ownership_update',
+            'UI',
+            `Ownership updated via API: ${data.notes || 'No notes'}`,
+            data.actor_person_id || 1  // Default to person_id 1 for single-user mode
+          ]
+        );
+      }
 
       return insertResult.rows[0];
     });
@@ -5732,49 +6269,8 @@ export async function POST(request: Request) {
   }
 }
 
-// GET endpoint to fetch observed ownership for a unit
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const unitId = searchParams.get('unit_id');
-    
-    if (!unitId) {
-      return NextResponse.json(
-        { error: 'unit_id parameter required' },
-        { status: 400 }
-      );
-    }
-
-    const result = await withTransaction(async (client) => {
-      const res = await client.query(
-        `SELECT 
-          obs.*,
-          r.code as role_code,
-          r.name as role_name,
-          o.code as org_code,
-          o.name as org_name
-         FROM unit_observed_ownership obs
-         LEFT JOIN org_role r ON r.role_id = obs.accountable_role_id
-         LEFT JOIN org_unit o ON o.org_unit_id = obs.accountable_org_unit_id
-         WHERE obs.unit_id = $1
-         ORDER BY obs.observed_as_of DESC
-         LIMIT 1`,
-        [unitId]
-      );
-      
-      return res.rows[0] || null;
-    });
-
-    return NextResponse.json(result);
-
-  } catch (error: any) {
-    console.error('Failed to fetch observed ownership:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch ownership' },
-      { status: 500 }
-    );
-  }
-}
+// GET endpoint removed - violates view contract (ui-fix.md Critical Bug #3)
+// Use v_rosetta_truth or /api/streams/[code]/units for reading ownership data
 
 ================
 File: rosetta-console/app/api/options/[type]/route.ts
@@ -5851,6 +6347,79 @@ export async function GET(
 }
 
 ================
+File: rosetta-console/app/api/streams/[code]/units/route.ts
+================
+import { NextResponse } from 'next/server';
+import { query } from '@/lib/db';
+
+interface TruthRow {
+  unit_id: number;
+  unit_code: string;
+  unit_name: string;
+  stream_code: string;
+  expected_role: string;
+  expected_role_id: number | null;
+  expected_org: string;
+  expected_org_id: number | null;
+  observed_role: string;
+  observed_role_id: number | null;
+  observed_org: string;
+  observed_org_id: number | null;
+  status: string;
+  evidence_count: number;
+  last_evidence_at: string | null;
+}
+
+export async function GET(
+  request: Request,
+  { params }: { params: { code: string } }
+) {
+  try {
+    const streamCode = params.code.toUpperCase();
+    
+    // Use v_rosetta_truth view and join to get IDs
+    const result = await query<TruthRow>(`
+      SELECT 
+        au.unit_id,
+        vrt.unit_code,
+        vrt.unit_name,
+        vrt.stream_code,
+        vrt.expected_role,
+        ueo.accountable_role_id as expected_role_id,
+        vrt.expected_org,
+        ueo.accountable_org_unit_id as expected_org_id,
+        vrt.observed_role,
+        obs.accountable_role_id as observed_role_id,
+        vrt.observed_org,
+        obs.accountable_org_unit_id as observed_org_id,
+        vrt.status,
+        vrt.evidence_count,
+        vrt.last_evidence_at
+      FROM v_rosetta_truth vrt
+      JOIN atomic_unit au ON au.code = vrt.unit_code
+      LEFT JOIN unit_expected_ownership ueo ON ueo.unit_id = au.unit_id
+      LEFT JOIN LATERAL (
+        SELECT accountable_role_id, accountable_org_unit_id 
+        FROM unit_observed_ownership 
+        WHERE unit_id = au.unit_id 
+        ORDER BY observed_as_of DESC 
+        LIMIT 1
+      ) obs ON true
+      WHERE vrt.stream_code = $1
+      ORDER BY vrt.unit_code
+    `, [streamCode]);
+    
+    return NextResponse.json(result);
+  } catch (error: any) {
+    console.error('Failed to fetch stream units:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch stream units' },
+      { status: 500 }
+    );
+  }
+}
+
+================
 File: rosetta-console/app/api/streams/route.ts
 ================
 import { NextResponse } from 'next/server';
@@ -5858,36 +6427,29 @@ import { query } from '@/lib/db';
 
 export async function GET() {
   try {
+    // Use views only - honor view contract (ui-fix.md Critical Bug #3)
     const result = await query(`
       SELECT
-        s.code,
-        s.name,
-        s.stream_id,
-        s.is_enabler,
-        COUNT(DISTINCT au.unit_id) as unit_count,
-        COUNT(DISTINCT CASE WHEN obs.unit_id IS NOT NULL THEN au.unit_id END) as units_with_ownership,
-        ROUND(
-          100.0 * COUNT(DISTINCT CASE WHEN obs.unit_id IS NOT NULL THEN au.unit_id END) / 
-          NULLIF(COUNT(DISTINCT au.unit_id), 0), 
-          1
-        ) as coverage_pct,
-        -- Include alignment metrics from v_ownership_summary if available
+        st.stream_code as code,
+        st.stream_name as name,
+        st.stream_id,
+        st.is_enabler,
+        st.unit_count,
+        -- Get alignment metrics from v_ownership_summary
         COALESCE(os.aligned, 0) as aligned_count,
         COALESCE(os.misattributed, 0) as misattributed_count,
         COALESCE(os.not_observed, 0) as not_observed_count,
-        COALESCE(os.alignment_pct, 0) as alignment_pct
-      FROM stream s
-      LEFT JOIN atomic_unit au ON au.stream_id = s.stream_id
-      LEFT JOIN LATERAL (
-        SELECT unit_id FROM unit_observed_ownership 
-        WHERE unit_id = au.unit_id 
-        LIMIT 1
-      ) obs ON true
-      LEFT JOIN v_ownership_summary os ON os.stream = s.code
-      WHERE s.parent_id IS NULL
-      GROUP BY s.stream_id, s.code, s.name, s.is_enabler, s.order_in_parent,
-               os.aligned, os.misattributed, os.not_observed, os.alignment_pct
-      ORDER BY s.order_in_parent
+        COALESCE(os.alignment_pct, 0) as alignment_pct,
+        -- Calculate coverage based on observed units
+        ROUND(
+          100.0 * (st.unit_count - COALESCE(os.not_observed, 0)) / 
+          NULLIF(st.unit_count, 0), 
+          1
+        ) as coverage_pct
+      FROM v_stream_tree st
+      LEFT JOIN v_ownership_summary os ON os.stream = st.stream_code
+      WHERE st.parent_id IS NULL  -- Top-level streams only
+      ORDER BY st.order_in_parent
     `);
     
     return NextResponse.json(result);
@@ -5983,76 +6545,1250 @@ export async function GET(request: Request) {
     return NextResponse.json(paginatedResult);
     
   } catch (error: any) {
-    console.error('Failed to fetch paginated truth data:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch truth data' },
-      { status: 500 }
-    );
+    console.error('Failed to fetch paginated truth data, attempting fallback:', error);
+    
+    // Fallback to v_misattribution_delta (ui-fix.md Critical Bug #4)
+    try {
+      const { searchParams } = new URL(request.url);
+      const page = parseInt(searchParams.get('page') || '1');
+      const pageSize = parseInt(searchParams.get('pageSize') || '50');
+      const filterStream = searchParams.get('stream') || null;
+      const filterStatus = searchParams.get('status') || null;
+      const offset = (page - 1) * pageSize;
+      
+      const fallbackResult = await query<any>(`
+        WITH filtered_data AS (
+          SELECT
+            au.unit_id,
+            vmd.unit_code,
+            vmd.unit_name,
+            vmd.stream_code,
+            vmd.expected_role,
+            vmd.expected_org,
+            vmd.observed_role,
+            vmd.observed_org,
+            vmd.attribution_status as status,
+            vmd.evidence_count,
+            vmd.last_evidence_at,
+            COUNT(*) OVER() as total_count
+          FROM v_misattribution_delta vmd
+          JOIN atomic_unit au ON au.code = vmd.unit_code
+          WHERE
+            ($1::text IS NULL OR vmd.stream_code = $1)
+            AND ($2::text IS NULL OR vmd.attribution_status = $2)
+        )
+        SELECT * FROM filtered_data
+        ORDER BY stream_code, unit_code
+        LIMIT $3 OFFSET $4
+      `, [filterStream, filterStatus, pageSize, offset]);
+      
+      const totalCount = fallbackResult.length > 0 ? (fallbackResult[0].total_count || 0) : 0;
+      const pageCount = Math.ceil(totalCount / pageSize);
+      
+      const data = fallbackResult.map(row => {
+        const { total_count, ...rest } = row;
+        return rest;
+      });
+      
+      return NextResponse.json({
+        data,
+        totalCount,
+        pageCount,
+        currentPage: page,
+        pageSize,
+        usedFallback: true  // Indicate fallback was used
+      });
+      
+    } catch (fallbackError: any) {
+      console.error('Fallback also failed:', fallbackError);
+      return NextResponse.json(
+        { error: 'Failed to fetch truth data from both primary and fallback sources' },
+        { status: 500 }
+      );
+    }
   }
 }
 
 ================
 File: rosetta-console/app/evidence/page.tsx
 ================
-import ComingSoon from "@/components/ComingSoon";
+"use client";
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar, Filter, FileText, User, Building } from "lucide-react";
+
+interface EvidenceRow {
+  evidence_id: number;
+  unit_id: number;
+  unit_code: string;
+  unit_name: string;
+  stream_code: string;
+  stream_name: string;
+  subject_ref: string;
+  evidence_type: string;
+  system_ref: string;
+  occurred_at: string;
+  notes: string;
+  actor_person_id: number | null;
+  actor_name: string | null;
+  actor_role: string | null;
+  actor_org: string | null;
+}
+
+const evidenceTypeConfig: Record<string, { label: string; color: string }> = {
+  ownership_update: { label: "Ownership Update", color: "bg-blue-100 text-blue-800" },
+  kpi_measurement: { label: "KPI Measurement", color: "bg-green-100 text-green-800" },
+  pricing_decision: { label: "Pricing Decision", color: "bg-purple-100 text-purple-800" },
+  solution_outline: { label: "Solution Outline", color: "bg-yellow-100 text-yellow-800" },
+  proposal_redline: { label: "Proposal Redline", color: "bg-red-100 text-red-800" },
+  recruit_req: { label: "Recruitment Request", color: "bg-indigo-100 text-indigo-800" },
+  scope_change: { label: "Scope Change", color: "bg-orange-100 text-orange-800" },
+  milestone_complete: { label: "Milestone Complete", color: "bg-emerald-100 text-emerald-800" },
+  invoice_adjustment: { label: "Invoice Adjustment", color: "bg-pink-100 text-pink-800" },
+};
 
 export default function EvidencePage() {
+  const [filters, setFilters] = useState({
+    stream: "",
+    type: "",
+    unit: "",
+  });
+
+  // Fetch evidence data using v_observed_from_evidence (ui-fix.md Section E)
+  const { data: evidence, isLoading } = useQuery<EvidenceRow[]>({
+    queryKey: ["evidence", filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters.stream) params.append("stream", filters.stream);
+      if (filters.type) params.append("type", filters.type);
+      if (filters.unit) params.append("unit", filters.unit);
+      params.append("limit", "200");
+
+      const response = await fetch(`/api/evidence?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch evidence");
+      return response.json();
+    },
+  });
+
+  // Get unique streams for filter
+  const streams = [...new Set(evidence?.map((e) => e.stream_code) || [])];
+  const types = Object.keys(evidenceTypeConfig);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Evidence Log</h1>
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-32 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <ComingSoon
-      title="Evidence Log"
-      description="Track all ownership changes and system updates with a complete audit trail"
-      features={[
-        "View all ownership updates with timestamps",
-        "Filter by evidence type (ownership_update, kpi_measurement, etc.)",
-        "Search by unit, actor, or date range",
-        "Export evidence for compliance reporting",
-        "Automatic logging of all system changes"
-      ]}
-    />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Evidence Log</h1>
+        <p className="text-muted-foreground mt-2">
+          Complete audit trail of ownership changes and system events (using v_observed_from_evidence)
+        </p>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filters
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Select
+              value={filters.stream}
+              onValueChange={(value) =>
+                setFilters({ ...filters, stream: value === "all" ? "" : value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Streams" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Streams</SelectItem>
+                {streams.map((stream) => (
+                  <SelectItem key={stream} value={stream}>
+                    {stream}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.type}
+              onValueChange={(value) =>
+                setFilters({ ...filters, type: value === "all" ? "" : value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {types.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {evidenceTypeConfig[type].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              onClick={() => setFilters({ stream: "", type: "", unit: "" })}
+            >
+              Clear Filters
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Evidence Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">{evidence?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">Total Entries</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">
+              {evidence?.filter((e) => e.evidence_type === "ownership_update").length || 0}
+            </div>
+            <p className="text-xs text-muted-foreground">Ownership Updates</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">
+              {[...new Set(evidence?.map((e) => e.unit_code) || [])].length}
+            </div>
+            <p className="text-xs text-muted-foreground">Units Affected</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-2xl font-bold">
+              {[...new Set(evidence?.map((e) => e.actor_person_id) || [])].length}
+            </div>
+            <p className="text-xs text-muted-foreground">Active Actors</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Evidence List */}
+      <div className="space-y-4">
+        {evidence?.map((item) => {
+          const typeConfig = evidenceTypeConfig[item.evidence_type] || {
+            label: item.evidence_type,
+            color: "bg-gray-100 text-gray-800",
+          };
+
+          return (
+            <Card key={item.evidence_id}>
+              <CardContent className="pt-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className={typeConfig.color}>
+                        {typeConfig.label}
+                      </Badge>
+                      <Badge variant="outline">{item.system_ref}</Badge>
+                      <Badge variant="secondary">{item.stream_code}</Badge>
+                    </div>
+                    <h3 className="font-semibold">
+                      {item.unit_code}: {item.unit_name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Subject: {item.subject_ref}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      {new Date(item.occurred_at).toLocaleDateString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {new Date(item.occurred_at).toLocaleTimeString()}
+                    </div>
+                  </div>
+                </div>
+
+                {item.notes && (
+                  <div className="bg-gray-50 rounded p-3 mb-3">
+                    <p className="text-sm">{item.notes}</p>
+                  </div>
+                )}
+
+                {item.actor_name && (
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground pt-3 border-t">
+                    <div className="flex items-center gap-1">
+                      <User className="h-4 w-4" />
+                      {item.actor_name}
+                    </div>
+                    {item.actor_role && (
+                      <div className="flex items-center gap-1">
+                        <FileText className="h-4 w-4" />
+                        {item.actor_role}
+                      </div>
+                    )}
+                    {item.actor_org && (
+                      <div className="flex items-center gap-1">
+                        <Building className="h-4 w-4" />
+                        {item.actor_org}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {(!evidence || evidence.length === 0) && (
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-muted-foreground">No evidence entries found</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
 ================
 File: rosetta-console/app/finance/page.tsx
 ================
-import ComingSoon from "@/components/ComingSoon";
+"use client";
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Users,
+  Building2,
+  Calculator,
+  Info,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+interface FinancialRow {
+  org_unit_id: number;
+  org_code: string;
+  org_name: string;
+  org_type: string;
+  parent_org_id: number | null;
+  parent_org_code: string | null;
+  parent_org_name: string | null;
+  headcount: number;
+  revenue: number;
+  direct_cost: number;
+  gross_margin: number;
+  gross_margin_pct: number;
+  sga_allocation: number | null;
+  operating_income: number | null;
+  operating_margin_pct: number | null;
+  period_month: string;
+  fact_type: string;
+}
 
 export default function FinancePage() {
+  const [viewMode, setViewMode] = useState<"direct" | "allocated">("direct");
+  const [selectedOrgType, setSelectedOrgType] = useState<string>("");
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("");
+
+  // Fetch financial data from v_financial_rollup or v_financial_rollup_with_sga (ui-fix.md Section E)
+  const { data: financials, isLoading } = useQuery<FinancialRow[]>({
+    queryKey: ["financials", viewMode, selectedOrgType, selectedPeriod],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append("view", viewMode);
+      if (selectedOrgType) params.append("org_type", selectedOrgType);
+      if (selectedPeriod) params.append("period", selectedPeriod);
+
+      const response = await fetch(`/api/finance?${params}`);
+      if (!response.ok) throw new Error("Failed to fetch financial data");
+      return response.json();
+    },
+  });
+
+  // Group data by org type
+  const pillars = financials?.filter((f) => f.org_type === "pillar") || [];
+  const coes = financials?.filter((f) => f.org_type === "coe") || [];
+  const practices = financials?.filter((f) => f.org_type === "practice") || [];
+
+  // Calculate totals
+  const totals = financials?.reduce(
+    (acc, curr) => {
+      if (!curr.parent_org_id) {
+        // Only sum top-level orgs to avoid double counting
+        acc.revenue += curr.revenue || 0;
+        acc.direct_cost += curr.direct_cost || 0;
+        acc.gross_margin += curr.gross_margin || 0;
+        acc.sga_allocation += curr.sga_allocation || 0;
+        acc.operating_income += curr.operating_income || 0;
+        acc.headcount += curr.headcount || 0;
+      }
+      return acc;
+    },
+    {
+      revenue: 0,
+      direct_cost: 0,
+      gross_margin: 0,
+      sga_allocation: 0,
+      operating_income: 0,
+      headcount: 0,
+    }
+  ) || {
+    revenue: 0,
+    direct_cost: 0,
+    gross_margin: 0,
+    sga_allocation: 0,
+    operating_income: 0,
+    headcount: 0,
+  };
+
+  // Get unique periods
+  const periods = [...new Set(financials?.map((f) => f.period_month) || [])].sort();
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Financial Dashboard</h1>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const formatCurrency = (value: number | null) => {
+    if (value === null || value === undefined) return "—";
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
+  const formatPercent = (value: number | null) => {
+    if (value === null || value === undefined) return "—";
+    return `${value.toFixed(1)}%`;
+  };
+
+  const renderOrgCard = (org: FinancialRow) => {
+    const marginColor = 
+      org.gross_margin_pct >= 30 ? "text-green-600" :
+      org.gross_margin_pct >= 20 ? "text-yellow-600" :
+      "text-red-600";
+
+    const opMarginColor = 
+      (org.operating_margin_pct || 0) >= 20 ? "text-green-600" :
+      (org.operating_margin_pct || 0) >= 10 ? "text-yellow-600" :
+      "text-red-600";
+
+    return (
+      <Card key={org.org_unit_id} className="hover:shadow-lg transition-shadow">
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-lg">{org.org_name}</CardTitle>
+              <CardDescription>
+                {org.parent_org_name && (
+                  <span className="text-xs">
+                    {org.parent_org_name} • 
+                  </span>
+                )}
+                {org.org_type === "pillar" && <Badge variant="default">Pillar</Badge>}
+                {org.org_type === "coe" && <Badge variant="secondary">COE</Badge>}
+                {org.org_type === "practice" && <Badge variant="outline">Practice</Badge>}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Users className="h-4 w-4" />
+              <span className="text-sm font-semibold">{org.headcount}</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Revenue & Direct Cost */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs text-muted-foreground">Revenue</p>
+              <p className="text-lg font-bold">{formatCurrency(org.revenue)}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Direct Cost</p>
+              <p className="text-lg font-bold">{formatCurrency(org.direct_cost)}</p>
+            </div>
+          </div>
+
+          {/* Gross Margin */}
+          <div className="border-t pt-3">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-xs text-muted-foreground">Gross Margin</p>
+                <p className="text-lg font-bold">{formatCurrency(org.gross_margin)}</p>
+              </div>
+              <Badge className={marginColor}>
+                {formatPercent(org.gross_margin_pct)}
+              </Badge>
+            </div>
+          </div>
+
+          {/* SG&A and Operating Income (only in allocated view) */}
+          {viewMode === "allocated" && (
+            <>
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-xs text-muted-foreground">SG&A Allocation</p>
+                    <p className="text-lg font-bold text-orange-600">
+                      {formatCurrency(org.sga_allocation)}
+                    </p>
+                  </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">
+                          SG&A allocated based on revenue contribution
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+
+              <div className="border-t pt-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Operating Income</p>
+                    <p className="text-lg font-bold">{formatCurrency(org.operating_income)}</p>
+                  </div>
+                  <Badge className={opMarginColor}>
+                    {formatPercent(org.operating_margin_pct)}
+                  </Badge>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Metadata */}
+          <div className="text-xs text-muted-foreground pt-2 border-t">
+            <span>{org.period_month} • {org.fact_type}</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
-    <ComingSoon
-      title="Financial Dashboard"
-      description="View direct and allocated P&L with SG&A distribution across organizational units"
-      features={[
-        "Direct P&L by practice, COE, and pillar",
-        "Allocated P&L with SG&A distribution",
-        "Budget vs Actual variance analysis",
-        "Margin calculations and trends",
-        "Drill-down from pillar to practice level",
-        "Export financial reports"
-      ]}
-    />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Financial Dashboard</h1>
+        <p className="text-muted-foreground mt-2">
+          Direct vs Allocated P&L with SG&A distribution toggle (ui-fix.md Section E)
+        </p>
+      </div>
+
+      {/* View Mode Toggle */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              P&L View Mode
+            </span>
+            <ToggleGroup
+              type="single"
+              value={viewMode}
+              onValueChange={(value) => value && setViewMode(value as "direct" | "allocated")}
+            >
+              <ToggleGroupItem value="direct" aria-label="Direct P&L">
+                Direct P&L
+              </ToggleGroupItem>
+              <ToggleGroupItem value="allocated" aria-label="Allocated P&L">
+                Allocated P&L (with SG&A)
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-muted p-3 rounded-lg">
+            <p className="text-sm">
+              {viewMode === "direct" ? (
+                <>
+                  <strong>Direct P&L:</strong> Shows revenue and direct costs only, 
+                  calculating gross margin without SG&A allocation. Uses <code>v_financial_rollup</code>.
+                </>
+              ) : (
+                <>
+                  <strong>Allocated P&L:</strong> Includes SG&A distribution based on revenue 
+                  contribution, showing operating income. Uses <code>v_financial_rollup_with_sga</code>.
+                </>
+              )}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <Select
+          value={selectedOrgType}
+          onValueChange={(value) => setSelectedOrgType(value === "all" ? "" : value)}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All Org Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Org Types</SelectItem>
+            <SelectItem value="pillar">Pillars Only</SelectItem>
+            <SelectItem value="coe">COEs Only</SelectItem>
+            <SelectItem value="practice">Practices Only</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={selectedPeriod}
+          onValueChange={(value) => setSelectedPeriod(value === "all" ? "" : value)}
+        >
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All Periods" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Periods</SelectItem>
+            {periods.map((period) => (
+              <SelectItem key={period} value={period}>
+                {period}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            setSelectedOrgType("");
+            setSelectedPeriod("");
+          }}
+        >
+          Clear Filters
+        </Button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(totals.revenue)}
+                </p>
+                <p className="text-xs text-muted-foreground">Total Revenue</p>
+              </div>
+              <DollarSign className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(totals.direct_cost)}
+                </p>
+                <p className="text-xs text-muted-foreground">Direct Cost</p>
+              </div>
+              <TrendingDown className="h-8 w-8 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(totals.gross_margin)}
+                </p>
+                <p className="text-xs text-muted-foreground">Gross Margin</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {viewMode === "allocated" && (
+          <>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(totals.sga_allocation)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">SG&A</p>
+                  </div>
+                  <Calculator className="h-8 w-8 text-orange-500" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(totals.operating_income)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Op Income</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-purple-500" />
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">{totals.headcount}</p>
+                <p className="text-xs text-muted-foreground">Headcount</p>
+              </div>
+              <Users className="h-8 w-8 text-indigo-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Pillars Section */}
+      {pillars.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Pillars
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pillars.map(renderOrgCard)}
+          </div>
+        </div>
+      )}
+
+      {/* COEs Section */}
+      {coes.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Centers of Excellence
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {coes.map(renderOrgCard)}
+          </div>
+        </div>
+      )}
+
+      {/* Practices Section */}
+      {practices.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Practices
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {practices.map(renderOrgCard)}
+          </div>
+        </div>
+      )}
+
+      {(!financials || financials.length === 0) && (
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-muted-foreground">No financial data found</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
 ================
 File: rosetta-console/app/kpis/page.tsx
 ================
-import ComingSoon from "@/components/ComingSoon";
+"use client";
+
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  Target,
+  Calculator,
+  Info,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+interface KPIRow {
+  kpi_id: number;
+  kpi_code: string;
+  kpi_name: string;
+  kpi_description: string;
+  kpi_type: "leading" | "lagging";
+  agg_type: "SUM" | "RATIO_OF_SUMS" | "WEIGHTED_AVG";
+  unit_of_measure: string;
+  current_value: number | null;
+  target_value: number | null;
+  threshold_yellow: number | null;
+  threshold_red: number | null;
+  status: "green" | "yellow" | "red" | "unknown";
+  last_measured: string | null;
+  stream_code: string | null;
+  unit_code: string | null;
+}
+
+const aggTypeExplanations = {
+  SUM: "Values are added together across all units",
+  RATIO_OF_SUMS: "Ratio calculated as sum(numerator)/sum(denominator)",
+  WEIGHTED_AVG: "Weighted average based on unit importance",
+};
+
+const statusColors = {
+  green: "bg-green-100 text-green-800 border-green-300",
+  yellow: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  red: "bg-red-100 text-red-800 border-red-300",
+  unknown: "bg-gray-100 text-gray-800 border-gray-300",
+};
 
 export default function KpiPage() {
+  const [selectedType, setSelectedType] = useState<"all" | "leading" | "lagging">("all");
+  const [showSQL, setShowSQL] = useState<number | null>(null);
+
+  // Fetch KPI data from v_kpi_rollup (ui-fix.md Section E)
+  const { data: kpis, isLoading } = useQuery<KPIRow[]>({
+    queryKey: ["kpis"],
+    queryFn: async () => {
+      const response = await fetch("/api/kpis");
+      if (!response.ok) throw new Error("Failed to fetch KPIs");
+      return response.json();
+    },
+  });
+
+  const filteredKPIs = kpis?.filter(
+    (kpi) => selectedType === "all" || kpi.kpi_type === selectedType
+  );
+
+  // Group KPIs by type
+  const leadingKPIs = filteredKPIs?.filter((k) => k.kpi_type === "leading") || [];
+  const laggingKPIs = filteredKPIs?.filter((k) => k.kpi_type === "lagging") || [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">KPI Dashboard</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-48" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const renderKPICard = (kpi: KPIRow) => {
+    const percentage = kpi.target_value && kpi.current_value
+      ? (kpi.current_value / kpi.target_value) * 100
+      : null;
+
+    return (
+      <Card key={kpi.kpi_id} className={`border-2 ${statusColors[kpi.status]}`}>
+        <CardHeader>
+          <div className="flex items-start justify-between">
+            <div>
+              <CardTitle className="text-lg">{kpi.kpi_name}</CardTitle>
+              <CardDescription className="mt-1">
+                {kpi.kpi_description}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge variant={kpi.kpi_type === "leading" ? "default" : "secondary"}>
+                {kpi.kpi_type === "leading" ? (
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                ) : (
+                  <TrendingDown className="h-3 w-3 mr-1" />
+                )}
+                {kpi.kpi_type}
+              </Badge>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="cursor-help">
+                      {kpi.agg_type}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">{aggTypeExplanations[kpi.agg_type]}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Current vs Target */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-muted-foreground">Current Value</p>
+                <p className="text-2xl font-bold">
+                  {kpi.current_value !== null ? (
+                    <>
+                      {Number(kpi.current_value).toLocaleString()}
+                      {kpi.unit_of_measure && (
+                        <span className="text-sm ml-1">{kpi.unit_of_measure}</span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-400">Not measured</span>
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Target</p>
+                <p className="text-2xl font-bold">
+                  {kpi.target_value !== null ? (
+                    <>
+                      {Number(kpi.target_value).toLocaleString()}
+                      {kpi.unit_of_measure && (
+                        <span className="text-sm ml-1">{kpi.unit_of_measure}</span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-gray-400">Not set</span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            {percentage !== null && (
+              <div>
+                <div className="flex justify-between text-sm mb-1">
+                  <span>Progress</span>
+                  <span>{percentage.toFixed(1)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className={`h-2 rounded-full ${
+                      kpi.status === "green"
+                        ? "bg-green-500"
+                        : kpi.status === "yellow"
+                        ? "bg-yellow-500"
+                        : "bg-red-500"
+                    }`}
+                    style={{ width: `${Math.min(percentage, 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Thresholds */}
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-yellow-400 rounded" />
+                <span className="text-muted-foreground">Yellow:</span>
+                <span>{kpi.threshold_yellow || "N/A"}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 bg-red-400 rounded" />
+                <span className="text-muted-foreground">Red:</span>
+                <span>{kpi.threshold_red || "N/A"}</span>
+              </div>
+            </div>
+
+            {/* Metadata */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+              <span>
+                {kpi.stream_code && `Stream: ${kpi.stream_code}`}
+                {kpi.unit_code && ` • Unit: ${kpi.unit_code}`}
+              </span>
+              {kpi.last_measured && (
+                <span>Last: {new Date(kpi.last_measured).toLocaleDateString()}</span>
+              )}
+            </div>
+
+            {/* Show SQL Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSQL(showSQL === kpi.kpi_id ? null : kpi.kpi_id)}
+              className="w-full"
+            >
+              <Calculator className="h-4 w-4 mr-2" />
+              {showSQL === kpi.kpi_id ? "Hide" : "Show"} Aggregation SQL
+            </Button>
+
+            {/* SQL Display */}
+            {showSQL === kpi.kpi_id && (
+              <div className="bg-gray-900 text-gray-100 p-3 rounded text-xs font-mono overflow-x-auto">
+                <pre>
+                  {`-- ${kpi.agg_type} Aggregation for ${kpi.kpi_name}
+SELECT 
+  kpi_id,
+  ${kpi.agg_type === "SUM" 
+    ? "SUM(measured_value) as current_value"
+    : kpi.agg_type === "RATIO_OF_SUMS"
+    ? `SUM(numerator) / NULLIF(SUM(denominator), 0) as current_value`
+    : `SUM(measured_value * weight) / NULLIF(SUM(weight), 0) as current_value`
+  }
+FROM kpi_measurement
+WHERE kpi_id = ${kpi.kpi_id}
+  AND measured_as_of >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY kpi_id;
+
+-- Data flows through: 
+-- kpi_measurement → v_kpi_rollup → UI`}
+                </pre>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
-    <ComingSoon
-      title="KPI Dashboard"
-      description="Manage driver and outcome metrics with targets and thresholds"
-      features={[
-        "Leading (driver) and lagging (outcome) KPIs",
-        "Target setting with yellow and red thresholds",
-        "Real-time measurement tracking",
-        "Unit-level and stream-level metrics",
-        "KPI cascade visualization",
-        "Automated evidence logging for KPI changes"
-      ]}
-    />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">KPI Dashboard</h1>
+        <p className="text-muted-foreground mt-2">
+          Driver and outcome metrics with{" "}
+          <span className="font-semibold">SUM/RATIO_OF_SUMS/WEIGHTED_AVG</span> transparency
+          (ui-fix.md Section E)
+        </p>
+      </div>
+
+      {/* Filter Tabs */}
+      <div className="flex gap-2">
+        <Button
+          variant={selectedType === "all" ? "default" : "outline"}
+          onClick={() => setSelectedType("all")}
+        >
+          All KPIs ({kpis?.length || 0})
+        </Button>
+        <Button
+          variant={selectedType === "leading" ? "default" : "outline"}
+          onClick={() => setSelectedType("leading")}
+        >
+          <TrendingUp className="h-4 w-4 mr-2" />
+          Leading ({leadingKPIs.length})
+        </Button>
+        <Button
+          variant={selectedType === "lagging" ? "default" : "outline"}
+          onClick={() => setSelectedType("lagging")}
+        >
+          <TrendingDown className="h-4 w-4 mr-2" />
+          Lagging ({laggingKPIs.length})
+        </Button>
+      </div>
+
+      {/* KPI Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">
+                  {kpis?.filter((k) => k.status === "green").length || 0}
+                </p>
+                <p className="text-xs text-muted-foreground">On Track</p>
+              </div>
+              <Activity className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">
+                  {kpis?.filter((k) => k.status === "yellow").length || 0}
+                </p>
+                <p className="text-xs text-muted-foreground">At Risk</p>
+              </div>
+              <Activity className="h-8 w-8 text-yellow-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">
+                  {kpis?.filter((k) => k.status === "red").length || 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Off Track</p>
+              </div>
+              <Activity className="h-8 w-8 text-red-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold">
+                  {kpis?.filter((k) => k.status === "unknown").length || 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Not Measured</p>
+              </div>
+              <Activity className="h-8 w-8 text-gray-400" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Leading KPIs */}
+      {leadingKPIs.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Leading KPIs (Drivers)
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">
+                    Leading KPIs are predictive metrics that drive future outcomes
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {leadingKPIs.map(renderKPICard)}
+          </div>
+        </div>
+      )}
+
+      {/* Lagging KPIs */}
+      {laggingKPIs.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <TrendingDown className="h-5 w-5" />
+            Lagging KPIs (Outcomes)
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">
+                    Lagging KPIs are outcome metrics that measure past performance
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {laggingKPIs.map(renderKPICard)}
+          </div>
+        </div>
+      )}
+
+      {(!filteredKPIs || filteredKPIs.length === 0) && (
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-muted-foreground">No KPIs found</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
@@ -6081,31 +7817,21 @@ export default function OrgPage() {
 ================
 File: rosetta-console/app/stream/[code]/page.tsx
 ================
-import { query } from "@/lib/db";
-import StreamDetailView from "@/components/StreamDetailView";
+import { Suspense } from "react";
+import StreamDetailClient from "@/components/StreamDetailClient";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function StreamPage({ params }: { params: { code: string } }) {
-  const units = await query(`
-    SELECT au.*, 
-           er.code as expected_role, eo.code as expected_org,
-           obsr.code as observed_role, obso.code as observed_org
-    FROM atomic_unit au
-    JOIN stream s ON s.stream_id = au.stream_id
-    LEFT JOIN unit_expected_ownership ueo ON ueo.unit_id = au.unit_id
-    LEFT JOIN org_role er ON er.role_id = ueo.accountable_role_id
-    LEFT JOIN org_unit eo ON eo.org_unit_id = ueo.accountable_org_unit_id
-    LEFT JOIN LATERAL (
-      SELECT * FROM unit_observed_ownership 
-      WHERE unit_id = au.unit_id 
-      ORDER BY observed_as_of DESC LIMIT 1
-    ) obs ON true
-    LEFT JOIN org_role obsr ON obsr.role_id = obs.accountable_role_id
-    LEFT JOIN org_unit obso ON obso.org_unit_id = obs.accountable_org_unit_id
-    WHERE s.code = $1
-    ORDER BY au.order_in_stream
-  `, [params.code]);
-
-  return <StreamDetailView units={units} streamCode={params.code} />;
+export default function StreamPage({ params }: { params: { code: string } }) {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto p-6">
+        <Skeleton className="h-10 w-64 mb-6" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    }>
+      <StreamDetailClient streamCode={params.code.toUpperCase()} />
+    </Suspense>
+  );
 }
 
 ================
@@ -6161,10 +7887,11 @@ File: rosetta-console/app/truth/page.tsx
 ================
 "use client";
 
+import { useState } from "react";
 import { OwnershipSummary } from "@/components/OwnershipSummary";
 import TruthTableV4 from "@/components/TruthTableV4";
 
-// Updated Truth page with v4 spec features (lines 69-211)
+// Updated Truth page with clickable summary filters (ui-fix.md Usability)
 export default function TruthPage({ 
   searchParams 
 }: { 
@@ -6175,9 +7902,14 @@ export default function TruthPage({
   } 
 }) {
   const initialPage = searchParams?.page ? parseInt(searchParams.page) : 1;
-  const initialFilters = {
+  const [filters, setFilters] = useState({
     stream: searchParams?.stream,
     status: searchParams?.status
+  });
+
+  // Handle filter changes from summary cards
+  const handleFilterChange = (newFilters: { stream?: string; status?: string }) => {
+    setFilters(newFilters);
   };
 
   return (
@@ -6192,8 +7924,8 @@ export default function TruthPage({
         </p>
       </div>
 
-      {/* Ownership Summary Dashboard */}
-      <OwnershipSummary />
+      {/* Ownership Summary Dashboard with clickable filters */}
+      <OwnershipSummary onFilterChange={handleFilterChange} />
 
       {/* Truth Table with Pagination */}
       <div className="bg-white rounded-lg shadow">
@@ -6201,7 +7933,7 @@ export default function TruthPage({
           <h2 className="text-xl font-semibold mb-4">Ownership Details</h2>
           <TruthTableV4 
             initialPage={initialPage}
-            initialFilters={initialFilters}
+            initialFilters={filters}
           />
         </div>
       </div>
@@ -7077,8 +8809,6 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     "Aligned": "success",
     "Misattributed": "error",
     "Not Observed": "warning",
-    "Role Mismatch": "error",
-    "Org Mismatch": "error",
   };
 
   return (
@@ -7193,6 +8923,120 @@ export function TabsContent({
   
   return <div className={`mt-4 ${className}`}>{children}</div>;
 }
+
+================
+File: rosetta-console/components/ui/toggle-group.tsx
+================
+"use client"
+
+import * as React from "react"
+import * as ToggleGroupPrimitive from "@radix-ui/react-toggle-group"
+import { type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+import { toggleVariants } from "@/components/ui/toggle"
+
+const ToggleGroupContext = React.createContext<
+  VariantProps<typeof toggleVariants>
+>({
+  size: "default",
+  variant: "default",
+})
+
+const ToggleGroup = React.forwardRef<
+  React.ElementRef<typeof ToggleGroupPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root> &
+    VariantProps<typeof toggleVariants>
+>(({ className, variant, size, children, ...props }, ref) => (
+  <ToggleGroupPrimitive.Root
+    ref={ref}
+    className={cn("flex items-center justify-center gap-1", className)}
+    {...props}
+  >
+    <ToggleGroupContext.Provider value={{ variant, size }}>
+      {children}
+    </ToggleGroupContext.Provider>
+  </ToggleGroupPrimitive.Root>
+))
+
+ToggleGroup.displayName = ToggleGroupPrimitive.Root.displayName
+
+const ToggleGroupItem = React.forwardRef<
+  React.ElementRef<typeof ToggleGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Item> &
+    VariantProps<typeof toggleVariants>
+>(({ className, children, variant, size, ...props }, ref) => {
+  const context = React.useContext(ToggleGroupContext)
+
+  return (
+    <ToggleGroupPrimitive.Item
+      ref={ref}
+      className={cn(
+        toggleVariants({
+          variant: context.variant || variant,
+          size: context.size || size,
+        }),
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </ToggleGroupPrimitive.Item>
+  )
+})
+
+ToggleGroupItem.displayName = ToggleGroupPrimitive.Item.displayName
+
+export { ToggleGroup, ToggleGroupItem }
+
+================
+File: rosetta-console/components/ui/toggle.tsx
+================
+"use client"
+
+import * as React from "react"
+import * as TogglePrimitive from "@radix-ui/react-toggle"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+
+const toggleVariants = cva(
+  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        default: "bg-transparent",
+        outline:
+          "border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
+      },
+      size: {
+        default: "h-9 px-2 min-w-9",
+        sm: "h-8 px-1.5 min-w-8",
+        lg: "h-10 px-2.5 min-w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+const Toggle = React.forwardRef<
+  React.ElementRef<typeof TogglePrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TogglePrimitive.Root> &
+    VariantProps<typeof toggleVariants>
+>(({ className, variant, size, ...props }, ref) => (
+  <TogglePrimitive.Root
+    ref={ref}
+    className={cn(toggleVariants({ variant, size, className }))}
+    {...props}
+  />
+))
+
+Toggle.displayName = TogglePrimitive.Root.displayName
+
+export { Toggle, toggleVariants }
 
 ================
 File: rosetta-console/components/ui/Tooltip.tsx
@@ -7534,8 +9378,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OwnershipSummary as OwnershipSummaryType } from "@/types/database";
 
-// Implementation from v4 spec lines 449-486
-export function OwnershipSummary() {
+// Implementation from v4 spec lines 449-486 with clickable filters (ui-fix.md Usability)
+export function OwnershipSummary({ 
+  onFilterChange 
+}: { 
+  onFilterChange?: (filters: { stream?: string; status?: string }) => void 
+}) {
   const { data, isLoading, error } = useQuery<OwnershipSummaryType[]>({
     queryKey: ['ownership-summary'],
     queryFn: async () => {
@@ -7594,23 +9442,37 @@ export function OwnershipSummary() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div>
+              <div
+                className="cursor-pointer hover:opacity-80"
+                onClick={() => onFilterChange?.({ stream: stream.stream, status: "Aligned" })}
+                title="Click to filter aligned units"
+              >
                 <div className="text-2xl font-bold">
                   {Number(stream.alignment_pct).toFixed(1)}%
                 </div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground hover:underline">
                   {Number(stream.aligned)} of {Number(stream.total_units)} aligned
                 </div>
               </div>
               
               {Number(stream.misattributed) > 0 && (
-                <Badge variant="destructive" className="text-xs">
+                <Badge 
+                  variant="destructive" 
+                  className="text-xs cursor-pointer hover:opacity-80"
+                  onClick={() => onFilterChange?.({ stream: stream.stream, status: "Misattributed" })}
+                  title="Click to filter misattributed units"
+                >
                   {Number(stream.misattributed)} misattributed
                 </Badge>
               )}
               
               {Number(stream.not_observed) > 0 && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs cursor-pointer hover:opacity-80"
+                  onClick={() => onFilterChange?.({ stream: stream.stream, status: "Not Observed" })}
+                  title="Click to filter not observed units"
+                >
                   {Number(stream.not_observed)} not observed
                 </Badge>
               )}
@@ -7674,132 +9536,282 @@ export default function StatusChip({ status }: { status?: string }) {
 }
 
 ================
-File: rosetta-console/components/StreamDetailView.tsx
+File: rosetta-console/components/StreamDetailClient.tsx
 ================
 "use client";
+
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default function StreamDetailView({ units, streamCode }) {
-  const [data, setData] = useState(units);
-
-  async function setObserved(unitId, role, org) {
-    await fetch('/api/observed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ unitId, role, org })
-    });
-    // Update local state
-    setData(data.map(u => 
-      u.unit_id === unitId 
-        ? { ...u, observed_role: role, observed_org: org }
-        : u
-    ));
-  }
-
-  return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">{streamCode} Stream Units</h1>
-      
-      <div className="bg-white rounded-lg shadow">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="text-left p-4">Unit</th>
-              <th className="text-left p-4">Expected</th>
-              <th className="text-left p-4">Observed</th>
-              <th className="text-left p-4">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map(unit => {
-              const status = !unit.observed_role ? 'Not Set' :
-                unit.expected_role === unit.observed_role && 
-                unit.expected_org === unit.observed_org ? 'Aligned' : 'Misattributed';
-              
-              return (
-                <tr key={unit.unit_id} className={
-                  status === 'Aligned' ? 'bg-green-50' :
-                  status === 'Misattributed' ? 'bg-red-50' :
-                  ''
-                }>
-                  <td className="p-4">
-                    <div className="font-medium">{unit.code}</div>
-                    <div className="text-sm text-gray-600">{unit.name}</div>
-                  </td>
-                  
-                  <td className="p-4 font-mono text-sm">
-                    {unit.expected_role}@{unit.expected_org}
-                  </td>
-                  
-                  <td className="p-4">
-                    <ObservedOwnerEdit 
-                      unit={unit}
-                      onSave={(role, org) => setObserved(unit.unit_id, role, org)}
-                    />
-                  </td>
-                  
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      status === 'Aligned' ? 'bg-green-200 text-green-800' :
-                      status === 'Misattributed' ? 'bg-red-200 text-red-800' :
-                      'bg-gray-200 text-gray-800'
-                    }`}>
-                      {status}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+interface TruthRow {
+  unit_id: number;
+  unit_code: string;
+  unit_name: string;
+  stream_code: string;
+  expected_role: string;
+  expected_role_id: number | null;
+  expected_org: string;
+  expected_org_id: number | null;
+  observed_role: string;
+  observed_role_id: number | null;
+  observed_org: string;
+  observed_org_id: number | null;
+  status: string;
+  evidence_count: number;
+  last_evidence_at: string | null;
 }
 
-// Simple inline edit - NO DROPDOWNS UNLESS CLICKED
-function ObservedOwnerEdit({ unit, onSave }) {
-  const [editing, setEditing] = useState(false);
-  const [role, setRole] = useState(unit.observed_role || '');
-  const [org, setOrg] = useState(unit.observed_org || '');
+interface DropdownOption {
+  value: string;
+  label: string;
+  code: string;
+  depth?: number;
+}
 
-  if (!editing) {
+export default function StreamDetailClient({ streamCode }: { streamCode: string }) {
+  const queryClient = useQueryClient();
+
+  // Fetch units for this stream using v_rosetta_truth
+  const { data: units, isLoading: unitsLoading } = useQuery<TruthRow[]>({
+    queryKey: ['stream-units', streamCode],
+    queryFn: async () => {
+      const response = await fetch(`/api/streams/${streamCode}/units`);
+      if (!response.ok) throw new Error('Failed to fetch units');
+      return response.json();
+    },
+  });
+
+  // Fetch role options
+  const { data: roleOptions } = useQuery<DropdownOption[]>({
+    queryKey: ['role-options'],
+    queryFn: async () => {
+      const response = await fetch('/api/options/role');
+      if (!response.ok) throw new Error('Failed to fetch role options');
+      return response.json();
+    },
+  });
+
+  // Fetch org options
+  const { data: orgOptions } = useQuery<DropdownOption[]>({
+    queryKey: ['org-options'],
+    queryFn: async () => {
+      const response = await fetch('/api/options/org');
+      if (!response.ok) throw new Error('Failed to fetch org options');
+      return response.json();
+    },
+  });
+
+  // Mutation to update ownership
+  const updateOwnership = useMutation({
+    mutationFn: async ({ 
+      unitId, 
+      field, 
+      value 
+    }: { 
+      unitId: number; 
+      field: 'role' | 'org'; 
+      value: number | null;
+    }) => {
+      const payload = {
+        unit_id: unitId,
+        ...(field === 'role' 
+          ? { accountable_role_id: value }
+          : { accountable_org_unit_id: value }
+        ),
+        source: 'UI',
+        confidence_pct: 1.0,
+        notes: `Updated ${field} via Stream detail page`
+      };
+
+      const response = await fetch('/api/observed-ownership', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update ownership');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      // Refetch the units to get updated data
+      queryClient.invalidateQueries({ queryKey: ['stream-units', streamCode] });
+      queryClient.invalidateQueries({ queryKey: ['ownership-summary'] });
+    },
+  });
+
+  if (unitsLoading) {
     return (
-      <div 
-        onClick={() => setEditing(true)}
-        className="cursor-pointer hover:bg-gray-100 p-1 rounded font-mono text-sm"
-      >
-        {unit.observed_role && unit.observed_org 
-          ? `${unit.observed_role}@${unit.observed_org}`
-          : <span className="text-gray-400">Click to set</span>
-        }
+      <div className="container mx-auto p-6">
+        <Skeleton className="h-10 w-64 mb-6" />
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
 
+  if (!units || units.length === 0) {
+    return (
+      <div className="container mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-6">{streamCode} Stream</h1>
+        <Card>
+          <CardContent className="text-center py-8">
+            <p className="text-muted-foreground">No units found for this stream</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const alignedCount = units.filter(u => u.status === 'Aligned').length;
+  const misattributedCount = units.filter(u => u.status === 'Misattributed').length;
+  const notObservedCount = units.filter(u => u.status === 'Not Observed').length;
+
   return (
-    <div className="flex gap-2">
-      <input 
-        className="border rounded px-2 py-1 text-sm w-32"
-        placeholder="Role"
-        value={role}
-        onChange={(e) => setRole(e.target.value)}
-      />
-      <input 
-        className="border rounded px-2 py-1 text-sm w-32"
-        placeholder="Org"
-        value={org}
-        onChange={(e) => setOrg(e.target.value)}
-      />
-      <button 
-        onClick={() => {
-          onSave(role, org);
-          setEditing(false);
-        }}
-        className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
-      >
-        Save
-      </button>
+    <div className="container mx-auto p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">{streamCode} Stream Units</h1>
+        <div className="flex gap-4">
+          <Badge variant="outline">
+            Total: {units.length}
+          </Badge>
+          <Badge variant="success">
+            Aligned: {alignedCount}
+          </Badge>
+          <Badge variant="destructive">
+            Misattributed: {misattributedCount}
+          </Badge>
+          <Badge variant="secondary">
+            Not Observed: {notObservedCount}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {units.map((unit) => (
+          <Card key={unit.unit_id}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">
+                  {unit.unit_code}: {unit.unit_name}
+                </CardTitle>
+                <StatusBadge status={unit.status} />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Expected Ownership */}
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Expected Ownership
+                  </label>
+                  <div className="mt-1 p-2 bg-gray-50 rounded text-sm font-mono">
+                    {unit.expected_role || 'UNDEFINED'}@{unit.expected_org || 'UNDEFINED'}
+                  </div>
+                </div>
+
+                {/* Observed Role */}
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Observed Role
+                  </label>
+                  <Select
+                    value={unit.observed_role_id?.toString() || 'null'}
+                    onValueChange={(value) => {
+                      const numValue = value === 'null' ? null : parseInt(value);
+                      updateOwnership.mutate({
+                        unitId: unit.unit_id,
+                        field: 'role',
+                        value: numValue,
+                      });
+                    }}
+                    disabled={updateOwnership.isPending}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select role">
+                        {unit.observed_role || 'Not Set'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="null">Clear</SelectItem>
+                      {roleOptions?.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Observed Org */}
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Observed Org
+                  </label>
+                  <Select
+                    value={unit.observed_org_id?.toString() || 'null'}
+                    onValueChange={(value) => {
+                      const numValue = value === 'null' ? null : parseInt(value);
+                      updateOwnership.mutate({
+                        unitId: unit.unit_id,
+                        field: 'org',
+                        value: numValue,
+                      });
+                    }}
+                    disabled={updateOwnership.isPending}
+                  >
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select org">
+                        {unit.observed_org || 'Not Set'}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="null">Clear</SelectItem>
+                      {orgOptions?.map((option) => (
+                        <SelectItem 
+                          key={option.value} 
+                          value={option.value}
+                          className={option.depth ? `pl-${4 + option.depth * 4}` : ''}
+                        >
+                          {"  ".repeat(option.depth || 0)}{option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Evidence Info */}
+              {unit.evidence_count > 0 && (
+                <div className="mt-3 pt-3 border-t text-sm text-muted-foreground">
+                  {unit.evidence_count} evidence entries • 
+                  Last updated: {unit.last_evidence_at ? 
+                    new Date(unit.last_evidence_at).toLocaleDateString() : 
+                    'Never'
+                  }
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
@@ -8074,7 +10086,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { 
   RosettaTruthRow, 
   PaginatedResult, 
@@ -8339,7 +10357,31 @@ export default function TruthTableV4({
               <th className="px-4 py-3 text-left text-sm font-medium">Observed Role</th>
               <th className="px-4 py-3 text-left text-sm font-medium">Expected Org</th>
               <th className="px-4 py-3 text-left text-sm font-medium">Observed Org</th>
-              <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+              <th className="px-4 py-3 text-left text-sm font-medium">
+                <div className="flex items-center gap-1">
+                  Status
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm">
+                        <div className="space-y-2 text-sm">
+                          <p className="font-semibold">Misattribution Status Rules:</p>
+                          <ul className="space-y-1 list-disc list-inside">
+                            <li><strong>Aligned:</strong> Both observed role and org match expected values</li>
+                            <li><strong>Misattributed:</strong> Either observed role OR org differs from expected (or both)</li>
+                            <li><strong>Not Observed:</strong> No observed ownership has been set yet</li>
+                          </ul>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Status is computed by v_rosetta_truth view using these rules
+                          </p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </th>
               <th className="px-4 py-3 text-left text-sm font-medium">Evidence</th>
             </tr>
           </thead>
@@ -8665,6 +10707,9 @@ File: rosetta-console/package.json
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-toggle": "^1.1.10",
+    "@radix-ui/react-toggle-group": "^1.1.11",
+    "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-query": "^5.87.1",
     "@tanstack/react-query-devtools": "^5.87.3",
     "@tanstack/react-virtual": "^3.13.12",
@@ -8861,6 +10906,561 @@ File: rosetta-console/tsconfig.json
     "node_modules"
   ]
 }
+
+================
+File: UI-Design/ui-fix.md
+================
+## **Pass/Fail (at a glance)**
+
+
+
+
+
+**Fail (blocker).** The current UI violates the **View Contracts**, has **status logic contradictions** that corrupt summaries and filters, and the **edit flow** cannot persist valid observed ownership (wrong endpoint/payload). KPI/Finance/Evidence UIs are stubs, so key invariants are not surfaced. Details and precise fixes below.
+
+
+
+------
+
+
+
+
+
+## **How the implementation stacks up against the Ground‑Truth Invariants**
+
+
+
+
+
+
+
+### **1) Ownership Truth Model (Expected vs Observed; append‑only; latest wins)**
+
+
+
+
+
+- **Append‑only & latest‑wins are implemented in SQL**:
+
+  
+
+  - unit_observed_ownership is **insert‑only**; latest row is chosen via DISTINCT ON … ORDER BY observed_as_of DESC. This is used inside v_rosetta_truth.  
+
+  
+
+- **UI edit flow is broken** (cannot reliably persist):
+
+  
+
+  - StreamDetailView posts to /api/observed with **free‑text** role and org strings. There is **no** /api/observed route in the repo; the implemented endpoint is /api/observed-ownership and it expects **IDs** (accountable_role_id, accountable_org_unit_id) with allow‑listed/validated body. Result: edits won’t persist or will 400.  
+
+  
+
+
+
+
+
+**Verdict:** Data model is right; **UI write path is wrong** (critical).
+
+
+
+------
+
+
+
+
+
+### **2) Evidence Logging (every change; subject/type; actor; idempotency)**
+
+
+
+
+
+- **POST /api/observed-ownership** **does log evidence** (subject = OBS_{obs_id}, type = ownership_update). Good. 
+- **Actor not captured** on that write. evidence_log supports actor_person_id, actor_role_id, org_unit_id, and there’s an idempotency index option on (unit_id, subject_ref, evidence_type), but the API does **not** pass actor fields or accept an idempotency token. This misses the invariant (“actor, idempotency”).  
+
+
+
+
+
+**Verdict:** **Partial**. Evidence rows exist, but missing **actor attribution** and **idempotency control** from the UI/API.
+
+
+
+------
+
+
+
+
+
+### **3) View Contracts (UI** 
+
+### **must**
+
+###  **read only views:** 
+
+### **v_org_tree**
+
+### **,** 
+
+### **v_stream_tree**
+
+### **,** 
+
+### **v_rosetta_truth**
+
+### **/**
+
+### **v_misattribution_delta**
+
+### **,** 
+
+### **v_observed_from_evidence**
+
+### **,** 
+
+### **v_financial_rollup(_with_sga)**
+
+### **)**
+
+
+
+
+
+- The repo **claims** the UI reads only views. 
+
+- **But implemented pages & APIs frequently hit raw tables**:
+
+  
+
+  - /stream/[code] page selects directly from atomic_unit, unit_expected_ownership, and LATERAL into unit_observed_ownership (raw tables). 
+  - /streams page and its API query raw stream, atomic_unit, and unit_observed_ownership instead of v_stream_tree (and only optionally joins v_ownership_summary).  
+  - GET /api/observed-ownership reads unit_observed_ownership directly for the latest record. **No view.** 
+  - Truth page endpoint does call a **function** get_rosetta_truth_page (not a view); the function itself reads v_rosetta_truth. This is *close* but still not “views‑only”.  
+
+  
+
+
+
+
+
+**Verdict:** **Fail**. Multiple pages breach the “views‑only” contract.
+
+
+
+------
+
+
+
+
+
+### **4) Status Rules (Aligned / Misattributed / Not Observed)**
+
+
+
+
+
+- **v_rosetta_truth emits only Aligned, Misattributed, Not Observed** (single “Misattributed”). 
+
+- **UI & summary logic assume Role Mismatch and Org Mismatch**:
+
+  
+
+  - get_rosetta_truth_page maps the **Misattributed filter** to status IN ('Role Mismatch','Org Mismatch') — impossible with v_rosetta_truth → filter yields zero. 
+  - v_ownership_summary counts misattributed_count as status IN ('Role Mismatch','Org Mismatch') while reading v_rosetta_truth. That will be **0** even when rows are “Misattributed”. 
+  - The StatusBadge supports both “Misattributed” *and* “Role/Org Mismatch”, reflecting this inconsistency. 
+
+  
+
+
+
+
+
+**Verdict:** **Fail** (logic contradiction). Either change v_rosetta_truth to emit Role/Org breakdown *or* change UI + v_ownership_summary to treat “Misattributed” as a single state.
+
+
+
+------
+
+
+
+
+
+### **5) Truth Row Fallback (fallback to** 
+
+### **v_misattribution_delta**
+
+###  **if** 
+
+### **v_rosetta_truth**
+
+###  **missing)**
+
+
+
+
+
+- No fallback observed in the API or component code; all pagination/summary paths assume v_rosetta_truth exists.  
+- v_misattribution_delta **does** produce the finer states (Role/Org mismatch) — but the UI isn’t using it. 
+
+
+
+
+
+**Verdict:** **Fail** (unimplemented fallback).
+
+
+
+------
+
+
+
+
+
+### **6) KPI Aggregations (SUM, RATIO_OF_SUMS, WEIGHTED_AVG — clear & traceable)**
+
+
+
+
+
+- The **views** exist to support KPI/outcome rollups (v_stream_rollup, v_kpi_rollup) but the **UI pages are stubs** (/kpis Coming Soon). No surface for SUM/RATIO_OF_SUMS/WEIGHTED_AVG with traceability.  
+
+
+
+
+
+**Verdict:** **Missing** (functional gap).
+
+
+
+------
+
+
+
+
+
+### **7) Security Guardrails (allow‑list, validated inputs)**
+
+
+
+
+
+- **Good**: /api/observed-ownership uses Zod schema + explicit allowlist + FK validation, and logs evidence. 
+- **But**: the *client* edit path (Stream page) isn’t wired to this route nor to IDs, so validations never trigger; also other modifying routes (e.g., KPI, Evidence) are not implemented yet.  
+
+
+
+
+
+**Verdict:** **Partial**. Server guardrail OK where implemented; client wiring missing.
+
+
+
+------
+
+
+
+
+
+## **Critical Bugs (blockers)**
+
+
+
+
+
+1. **Status mismatch corrupts filters and summaries**
+
+   
+
+   - get_rosetta_truth_page treats “Misattributed” as (Role Mismatch,Org Mismatch) while v_rosetta_truth only emits “Misattributed” (single). This will make the “Misattributed” filter show **no rows** and set **misattributed_count to 0** in summaries.
+
+     Fix: either (A) change status logic everywhere to “Misattributed” (single), or (B) swap to v_misattribution_delta (rename attribution_status → status) and keep Role/Org detail.   
+
+   
+
+2. **Edit flow is pointed at the wrong endpoint with wrong payload**
+
+   
+
+   - Client posts to /api/observed with string values, but only /api/observed-ownership exists and expects **IDs**. Evidence: StreamDetailView vs API route.
+
+     Fix: use dropdowns (sourced from v_role_options, v_org_options) that submit accountable_role_id/accountable_org_unit_id to /api/observed-ownership.   
+
+   
+
+3. **View Contract violation** (reads raw tables)
+
+   
+
+   - /stream/[code], /streams, and GET /api/observed-ownership hit raw tables instead of the published views. This undermines stability and “latest wins” guarantees.   
+
+   
+
+4. **No fallback to v_misattribution_delta**
+
+   
+
+   - If v_rosetta_truth changes or fails, the truth page dies. Add fallback to keep UI robust as schema evolves.  
+
+   
+
+
+
+
+
+------
+
+
+
+
+
+## **Functional Gaps**
+
+
+
+
+
+- **Evidence UI** (proof browsing & filters) is a placeholder; not consuming v_observed_from_evidence.  
+- **KPI UI** (targets, measurements, cascade & rollups) is a placeholder; no surfacing of SUM/RATIO_OF_SUMS/WEIGHTED_AVG semantics. 
+- **Finance UI** is a placeholder; not consuming v_financial_rollup/v_financial_rollup_with_sga. 
+- **Ownership option dropdowns** for edits are missing; typing raw strings leads to invalid writes. (Use v_role_options, v_org_options.) 
+
+
+
+
+
+------
+
+
+
+
+
+## **Schema / UI Misalignments**
+
+
+
+
+
+- **Status taxonomy**:
+
+  
+
+  - v_rosetta_truth → Misattributed (single).
+  - v_misattribution_delta → Role Mismatch / Org Mismatch / Not Observed / Aligned.
+  - UI & v_ownership_summary assume the **delta taxonomy** while sourcing v_rosetta_truth. **Pick one taxonomy and align all consumers.**   
+
+  
+
+- **Observed edit payload**: UI sends strings; API expects numeric FKs. Use the helper views for dropdowns to submit IDs.   
+
+
+
+
+
+------
+
+
+
+
+
+## **Design Flaws (beauty, clarity, proof)**
+
+
+
+
+
+- **Proof of attribution not visible** on Truth screen (no side‑panel or drill to v_observed_from_evidence). You say “Evidence everywhere”, but the UI page is coming soon — no way to *show* the receipts inline.  
+- **Navigation promises** (Org/KPIs/Finance/Evidence) lead to “Coming Soon” cards — elegant visually, but they conceal required invariants (KPI math, finance rollups, proof browsing). 
+- **Streams page metrics** use raw joins and “ownership coverage” logic that indicates *existence* of any observation, not the “latest wins” truth via views. This erodes conceptual clarity. 
+
+
+
+
+
+------
+
+
+
+
+
+## **Recommendations (where to fix: UI, DB, or both)**
+
+
+
+
+
+
+
+### **A. Normalize the status model (**
+
+### **DB + UI**
+
+### **)**
+
+
+
+
+
+Option 1 — **Single status** in truth:
+
+
+
+- Keep v_rosetta_truth returning **Aligned / Misattributed / Not Observed**.
+- Change get_rosetta_truth_page filter and v_ownership_summary to count/filter **status = 'Misattributed'** (not Role/Org).  
+
+
+
+
+
+Option 2 — **Richer status** everywhere:
+
+
+
+- Switch Truth table to source from **v_misattribution_delta** (rename attribution_status → status) so you can display Role Mismatch vs Org Mismatch. Update get_rosetta_truth_page and v_ownership_summary accordingly. 
+
+
+
+
+
+> Pick one, apply across API, SQL helpers, StatusBadge, and summaries. Don’t mix.
+
+
+
+
+
+### **B. Fix the edit flow (**
+
+### **UI**
+
+### **)**
+
+
+
+
+
+- Replace free‑text inputs with **dropdowns** bound to v_role_options and v_org_options, and post to /api/observed-ownership with **IDs**. Add optimistic update, then refresh the single truth row or page.  
+- Add **actor capture** to the evidence log (single‑user → hardcode actor for now, but keep the fields). Allow an optional **idempotency key** (subject_ref) in the POST body and use the ux_evidence_natural uniqueness to dedupe. 
+
+
+
+
+
+
+
+### **C. Honor the views‑only contract (**
+
+### **UI**
+
+### **)**
+
+
+
+
+
+- Refactor reads to **views only**:
+
+  
+
+  - Streams: switch to v_stream_tree or a stream summary view; enrich with v_ownership_summary.
+
+  - Stream detail: use v_rosetta_truth (or v_misattribution_delta if adopting Option 2) filtered by stream_code.
+
+  - Observed GET: introduce a v_latest_observed (or rely on truth view fields) instead of hitting the base table.
+
+    Evidence page should use v_observed_from_evidence.  
+
+  
+
+
+
+
+
+
+
+### **D. Implement truth fallback (**
+
+### **UI**
+
+### **)**
+
+
+
+
+
+- In /api/truth/paginated, **try** get_rosetta_truth_page first; if it errors (view absent), **fallback** to a get_misattribution_delta_page function or a simple select from v_misattribution_delta with compatible columns.  
+
+
+
+
+
+
+
+### **E. Surface KPI math & finance (**
+
+### **UI**
+
+### **)**
+
+
+
+
+
+- Build /kpis to show, per KPI, the aggregation type (**SUM / RATIO_OF_SUMS / WEIGHTED_AVG**) and the exact rollup path; include “show SQL” or “explain card” for traceability.
+- Build /finance to toggle **direct vs allocated** using v_financial_rollup vs v_financial_rollup_with_sga.  
+
+
+
+
+
+------
+
+
+
+
+
+## **Usability Gaps (quick hits)**
+
+
+
+
+
+- **Seeded data not fully editable** due to the broken observed edit path. (Fix B.) 
+- **Ownership rules not self‑explaining**: add a help popover in Truth clarifying the status taxonomy you standardize on (“how is ‘Misattributed’ computed?”).
+- **Rollups hidden**: show the Ownership Summary card above the Truth grid (already present) and link counts to pre‑filtered views (e.g., click “Misattributed 7” → opens table filter). (Partially present; verify after status fix.)
+
+
+
+
+
+------
+
+
+
+
+
+## **Final Judgment**
+
+
+
+
+
+- **Critical Bugs:** Status contradictions; broken edit endpoint/payload; views‑only contract violations; missing truth fallback. (Blockers.)
+- **Functional Gaps:** Evidence/KPI/Finance UIs not implemented; no KPI aggregation transparency.
+- **Schema/UI Misalignments:** Status taxonomy; edit payload types.
+- **Design Flaws:** Proof not visible on Truth; nav leads to stubs for invariants‑critical areas.
+
+
+
+
+
+**Conclusion: Fail** — Do **not** proceed until the above are addressed. The fastest path to green:
+
+
+
+1. **Unify status model** (DB+UI) and fix get_rosetta_truth_page/v_ownership_summary.   
+2. **Fix edit flow** to /api/observed-ownership with **ID dropdowns** (role/org). Capture **actor** in evidence.   
+3. **Refactor reads to views only** across Streams/Detail/Observed GET. Add **truth fallback** to v_misattribution_delta.   
+4. **Ship minimal Evidence view** against v_observed_from_evidence; **then** bring KPI & Finance out of “Coming Soon” using existing views.
 
 ================
 File: UI-Design/ui-spec-v4.md
@@ -9899,437 +12499,6 @@ Key test scenarios:
 5. **SG&A allocation**: Toggle between direct and allocated views, confirm reconciliation
 
 ================
-File: Insights.md
-================
-**he Original Sin: The 2019/2020 Restructure That Missed the Mark**
-
-
-
- • You created the pillar structure (Service Excellence, Client
-
- Relationships, Finance & Operations, etc.) thinking it would drive
-
- accountability - but it actually created more silos
-
- • The pillars were run by non-partners (Tavia for Finance, Surma for HR,
-
- Grant for Sales) while partners remained disconnected from operational
-
- accountability
-
- • You elevated back-office leads and made a commitment that "all arms of
-
- Elire work together" but this actually created MORE overhead without true
-
- accountability
-
- • The fatal flaw: Pillars tracked metrics but nobody owned P&L outcomes -
-
- you were measuring activity not results
-
- • Each pillar created their own charters and initiatives but they were
-
- done in isolation, creating 50+ initiatives that overwhelmed the
-
- organization
-
- • The SPI (Strategic Planning Initiative) framework looked good on paper
-
- but became a bureaucratic exercise - partners would present, nod, then go
-
- back to their silos
-
-
-
- **The COE (Center of Excellence) Dysfunction Discovery**
-
-
-
- • COEs became kingdoms - each partner protected their turf (Cloud,
-
- On-Prem, EPM, Treasury)
-
- • The COE model created artificial boundaries - clients didn't care about
-
- your internal structure but suffered from it
-
- • Practice leads had phantom P&Ls - they'd report numbers but had no real
-
- accountability for profit
-
- • Discovery: Practice leads shouldn't have P&Ls at all - they should focus
-
-  purely on delivery excellence
-
- • The "matrixed" organization wasn't actually matrixed - it was just
-
- confused reporting lines with no clear ownership
-
-
-
- **The Ryan/Book of Business Revelations**
-
-
-
- • Ryan was carrying massive revenue but wasn't being compensated or
-
- recognized appropriately
-
- • The concept of "book of business" was completely broken - some partners
-
- claimed ownership of clients they barely touched
-
- • You realized partners need to OWN client relationships with full P&L
-
- accountability, not just "manage practices"
-
- • The split between "sales partners" and "delivery partners" was
-
- artificial and harmful
-
- • Client partners should own the full lifecycle - sales through delivery
-
- through managed services
-
-
-
- **The Sales Dysfunction Epiphanies**
-
-
-
- • Sales was organized by industry (Federal, State/Local, Commercial) but
-
- delivery was organized by technology - complete mismatch
-
- • Grant's sales organization was making promises delivery couldn't keep
-
- because they weren't aligned
-
- • The handoff between sales and delivery was a black hole - Friend would
-
- close deals then throw them over the wall
-
- • Pricing was wild west - same services priced 10 different ways with
-
- margin variance of 15+ points
-
- • No unified rate card meant every deal was a custom negotiation, killing
-
- margins
-
- • Contract reviews were ad-hoc - hidden liabilities would snowball and
-
- bite you later
-
-
-
- **The Contract and Commercial Model Problems**
-
-
-
- • You discovered contracts were being signed without proper risk
-
- assessment - especially on fixed-fee work
-
- • No contract compliance capabilities - especially problematic with
-
- Federal contracts requiring specific reporting
-
- • The GSA contract and JV were underutilized because nobody understood how
-
-  to leverage them
-
- • CMMC and NIST compliance requirements for Federal work weren't even on
-
- the radar until too late
-
- • Subcontractor agreements were leaking IP - 22% sub ratio with no
-
- knowledge capture requirements
-
-
-
- **The Strategic Planning Failures**
-
-
-
- • Every year you'd do strategic planning but it was theater - present
-
- pretty slides then go back to chaos
-
- • The gap between strategy and execution was massive - no mechanism to
-
- enforce strategic decisions
-
- • Partners would agree in the room then undermine decisions through
-
- inaction
-
- • No consequences for missing strategic initiatives - they'd just roll to
-
- next year
-
- • The strategic pillars created more overhead (pillar heads, coordinators)
-
-  without driving results
-
-
-
- **The Competency Center Concept Evolution**
-
-
-
- • Initial thought: Create competency centers for technical excellence
-
- • Reality: Competency without accountability is just overhead
-
- • Evolution: Competency should be embedded in delivery, not a separate
-
- structure
-
- • The revelation: You need capability at the atomic level (specific
-
- skills) not organizational level (departments)
-
- • Competency centers became hiding places for non-billable resources
-
-
-
- **The PMO/Methodology Chaos Recognition**
-
-
-
- • 5 different practices with 5 different methodologies - clients
-
- experienced completely different Elires
-
- • PMO was a joke - 1 director and 2 coordinators for a $50M firm
-
- • No unified project governance - each practice did their own thing
-
- • The methodology existed as 800+ artifacts with no organizing principle -
-
-  tribal knowledge ruled
-
- • Project managers were winging it - no standard gates, no consistent
-
- quality checks
-
-
-
- **The Financial/Margin Truth Bombs**
-
-
-
- • Net margin at 7.7% when peers are at 15-20% - you're literally giving
-
- away half your profit
-
- • Conference spend of $800K-$1.2M with ZERO ROI tracking
-
- • Discretionary spending with no governance - partners spending on their
-
- pet projects
-
- • Internal transfer pricing fights between practices destroying margins on
-
-  multi-practice deals
-
- • No understanding of true delivery costs - couldn't price properly
-
- because didn't know costs
-
-
-
- **The Partner Compensation Awakening**
-
-
-
- • The 2020 comp realignment removed incentives thinking base would rise
-
- with success - massive mistake
-
- • You personally went from significant comp to "almost nothing" despite
-
- carrying 58% of revenue
-
- • Partners being rewarded for tenure and overhead roles, not value
-
- creation
-
- • No tie between partner comp and actual business results
-
- • The equity event will NEVER happen under current structure - no buyer
-
- would touch this mess
-
-
-
- **The Talent/HR Revelations**
-
-
-
- • Career paths were fiction - no real advancement opportunities
-
- • Promoting people to manager/director titles without changing
-
- responsibilities - title inflation
-
- • The associate program wasn't developing talent, just burning through
-
- juniors
-
- • No mentorship structure - remote work killed informal coaching
-
- • Attrition bleeding both margin and IP - people leaving with client
-
- relationships and knowledge
-
-
-
- **The Technology/Systems Gaps**
-
-
-
- • Certinia (PSA) underutilized - maybe 40% adoption
-
- • No single source of truth for project data - spreadsheet hell
-
- • Resource management via Slack at midnight - absolutely insane
-
- • No BI/analytics capability - flying blind on all key metrics
-
- • Master data quality so bad you couldn't trust any reports
-
-
-
- **The Utilization/Resource Management Disaster**
-
-
-
- • Utilization tracking was a lie - people backdating timesheets, gaming
-
- the system
-
- • No forward-looking resource management - purely reactive staffing
-
- • Practices hoarding resources while others starved
-
- • Bench time completely unproductive - no IP creation, no skill
-
- development
-
- • The myth of "billable utilization" - tracked hours but not value
-
-
-
- **The Client Experience Fragmentation**
-
-
-
- • Clients experienced 5 different Elires depending on which practice they
-
- hit
-
- • No unified client journey - from sales through delivery through managed
-
- services
-
- • Path to Cloud was a concept not an execution model
-
- • Managed Services treated as an afterthought, not strategic annuity
-
- stream
-
- • No client success function - delivery ended and relationships died
-
-
-
- **The Spring Partner Meeting Prep Discoveries**
-
-
-
- • You realized you needed 80+ charters to fix everything - overwhelming
-
- complexity
-
- • The workshop prep revealed partners weren't aligned on even basic
-
- problems
-
- • Dot voting and consensus building were theater - no real decision making
-
- • Partners would participate in exercises then ignore outcomes
-
- • The EPM acquisition partners were wild cards - different culture,
-
- different expectations
-
-
-
- **The Final Crystallization: The Atomic Methodology Vision**
-
-
-
- • Everything needs to tie to Oracle FSM Task IDs - canonical scope truth
-
- • Atomic units small enough to be perfect, large enough to be valuable
-
- • Stage × Lane × Type × Sequence - every artifact has an address
-
- • Evidence over opinion - Oracle Success Navigator as the spine
-
- • The revelation: Don't map dysfunction, force new structure
-
- • Purpose-driven everything - if it doesn't have a clear purpose and exit
-
- criteria, kill it
-
-
-
- **What You're Trying to Prove**
-
-
-
-1. **The current structure is a value-destruction machine** - you're
-
- subsidizing failure
-
-2. **Partners must own P&L or leave** - no more hiding in overhead roles
-3. **The atomic methodology is the differentiator** - beat Big 5 on clarity
-
- and execution
-
-4. **Without restructure, everyone loses** - no exit, no growth, no future
-5. **You have both the diagnosis AND the cure** - not just complaining, but
-
- solving
-
-6. **The time for consensus is over** - force change or walk away
-7. **The business model itself needs reimagining** - not just reorg but
-
- transformation
-
-8. **Technology + methodology + governance must align** - three-legged stool
-9. **Client-centricity requires structural change** - current structure is
-
- internally focused
-
-10. **Your revenue contribution gives you moral authority** - 58% means you
-
- decide
-
-
-
- The core thesis for Michael: The firm is structurally designed to fail.
-
- Every system, process, and incentive drives the wrong behavior. You've
-
- designed the solution but need either total buy-in or a clean break. The
-
- status quo is literally bankrupting you while enriching passengers.
-
-================
 File: README.md
 ================
 # Elire WBS Phase 3 - Rosetta Console
@@ -10494,6 +12663,26 @@ Proprietary - All rights reserved
 ## Support
 
 For questions or issues, please contact the Elire operations team.
+
+================
+File: ToDO.md
+================
+Functions - 
+
+- look at ownership definition
+- Review original restructure and 3 year plan
+
+
+
+
+
+Book of Business
+
+- Jason 
+- Chris
+- Maske - help
+
+Minders, Grinder, Finders
 
 
 

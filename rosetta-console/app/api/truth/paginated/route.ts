@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     const pageSize = parseInt(searchParams.get('pageSize') || '50');
     const filterStream = searchParams.get('stream') || null;
     const filterStatus = searchParams.get('status') || null;
+    const filterExpectedOrg = searchParams.get('expected_org') || null;
     
     // Validate parameters
     if (page < 1 || pageSize < 1 || pageSize > 100) {
@@ -22,16 +23,46 @@ export async function GET(request: Request) {
     
     const offset = (page - 1) * pageSize;
     
-    // Call the paginated function from 10-ui-helpers.sql
-    const result = await query<RosettaTruthRow>(`
-      SELECT * FROM get_rosetta_truth_page(
-        $1::int,
-        $2::int,
-        $3::text,
-        $4::text
-      )`,
-      [pageSize, offset, filterStream, filterStatus]
-    );
+    let result: RosettaTruthRow[];
+    
+    // If filtering by expected_org, use custom query
+    if (filterExpectedOrg) {
+      result = await query<RosettaTruthRow>(`
+        WITH filtered_data AS (
+          SELECT
+            vrt.unit_code,
+            vrt.unit_name,
+            vrt.stream_code,
+            vrt.expected_role,
+            vrt.expected_org,
+            vrt.observed_role,
+            vrt.observed_org,
+            vrt.status,
+            vrt.evidence_count,
+            vrt.last_evidence_at,
+            COUNT(*) OVER() as total_count
+          FROM v_rosetta_truth vrt
+          WHERE
+            ($1::text IS NULL OR vrt.stream_code = $1)
+            AND ($2::text IS NULL OR vrt.status = $2)
+            AND ($3::text IS NULL OR vrt.expected_org = $3)
+        )
+        SELECT * FROM filtered_data
+        ORDER BY stream_code, unit_code
+        LIMIT $4 OFFSET $5
+      `, [filterStream, filterStatus, filterExpectedOrg, pageSize, offset]);
+    } else {
+      // Use the existing function for other cases
+      result = await query<RosettaTruthRow>(`
+        SELECT * FROM get_rosetta_truth_page(
+          $1::int,
+          $2::int,
+          $3::text,
+          $4::text
+        )`,
+        [pageSize, offset, filterStream, filterStatus]
+      );
+    }
     
     // Extract total count from first row (if exists)
     const totalCount = result.length > 0 ? (result[0].total_count || 0) : 0;
