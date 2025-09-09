@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DropdownOption } from "@/types/database";
 
 interface TruthRow {
   unit_id: number;
@@ -30,13 +31,6 @@ interface TruthRow {
   status: string;
   evidence_count: number;
   last_evidence_at: string | null;
-}
-
-interface DropdownOption {
-  value: string;
-  label: string;
-  code: string;
-  depth?: number;
 }
 
 export default function StreamDetailClient({ streamCode }: { streamCode: string }) {
@@ -91,7 +85,8 @@ export default function StreamDetailClient({ streamCode }: { streamCode: string 
         ),
         source: 'UI',
         confidence_pct: 1.0,
-        notes: `Updated ${field} via Stream detail page`
+        notes: `Updated ${field} via Stream detail page`,
+        idempotency_key: `${unitId}-${field}-${value}-${Math.floor(Date.now() / 60000)}` // Round to minute
       };
 
       const response = await fetch('/api/observed-ownership', {
@@ -111,6 +106,8 @@ export default function StreamDetailClient({ streamCode }: { streamCode: string 
       // Refetch the units to get updated data
       queryClient.invalidateQueries({ queryKey: ['stream-units', streamCode] });
       queryClient.invalidateQueries({ queryKey: ['ownership-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['truth-data'] });
+      queryClient.invalidateQueries({ queryKey: ['workbench-units'] });
     },
   });
 
@@ -212,7 +209,7 @@ export default function StreamDetailClient({ streamCode }: { streamCode: string 
                     <SelectContent>
                       <SelectItem value="null">Clear</SelectItem>
                       {roleOptions?.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
+                        <SelectItem key={option.value} value={option.value.toString()}>
                           {option.label}
                         </SelectItem>
                       ))}
@@ -247,7 +244,7 @@ export default function StreamDetailClient({ streamCode }: { streamCode: string 
                       {orgOptions?.map((option) => (
                         <SelectItem 
                           key={option.value} 
-                          value={option.value}
+                          value={option.value.toString()}
                           className={option.depth ? `pl-${4 + option.depth * 4}` : ''}
                         >
                           {"  ".repeat(option.depth || 0)}{option.label}

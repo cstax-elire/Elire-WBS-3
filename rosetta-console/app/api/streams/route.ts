@@ -6,11 +6,9 @@ export async function GET() {
     // Use views only - honor view contract (ui-fix.md Critical Bug #3)
     const result = await query(`
       SELECT
-        st.stream_code as code,
-        st.stream_name as name,
-        st.stream_id,
-        st.is_enabler,
-        st.unit_count,
+        st.code,
+        st.name,
+        (st.direct_unit_count + st.linked_child_units) as unit_count,
         -- Get alignment metrics from v_ownership_summary
         COALESCE(os.aligned, 0) as aligned_count,
         COALESCE(os.misattributed, 0) as misattributed_count,
@@ -18,14 +16,14 @@ export async function GET() {
         COALESCE(os.alignment_pct, 0) as alignment_pct,
         -- Calculate coverage based on observed units
         ROUND(
-          100.0 * (st.unit_count - COALESCE(os.not_observed, 0)) / 
-          NULLIF(st.unit_count, 0), 
+          100.0 * ((st.direct_unit_count + st.linked_child_units) - COALESCE(os.not_observed, 0)) / 
+          NULLIF((st.direct_unit_count + st.linked_child_units), 0), 
           1
         ) as coverage_pct
       FROM v_stream_tree st
-      LEFT JOIN v_ownership_summary os ON os.stream = st.stream_code
+      LEFT JOIN v_ownership_summary os ON os.stream = st.code
       WHERE st.parent_id IS NULL  -- Top-level streams only
-      ORDER BY st.order_in_parent
+      ORDER BY st.code
     `);
     
     return NextResponse.json(result);

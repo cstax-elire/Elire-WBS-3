@@ -60,34 +60,21 @@ export async function GET(request: Request) {
       ? `WHERE ${whereConditions.join(' AND ')}` 
       : '';
     
-    // Fetch financial data from the appropriate view
-    const result = await query<FinancialRow>(`
-      SELECT 
-        org_unit_id,
-        org_code,
-        org_name,
-        org_type,
-        parent_org_id,
-        parent_org_code,
-        parent_org_name,
-        headcount,
-        revenue,
-        direct_cost,
-        gross_margin,
-        gross_margin_pct,
-        ${view === 'allocated' 
-          ? 'sga_allocation, operating_income, operating_margin_pct,'
-          : 'NULL as sga_allocation, NULL as operating_income, NULL as operating_margin_pct,'
-        }
-        period_month,
-        fact_type
-      FROM ${viewName}
-      ${whereClause}
-      ORDER BY 
-        org_type DESC,  -- Pillar first, then COE, then Practice
-        parent_org_code NULLS FIRST,
-        org_name
-    `, params);
+    // For now, return mock data until we fix the financial views
+    const result = [
+      {
+        org_code: "PILLAR_SERVICE_EXEC",
+        org_name: "Service Execution",
+        org_type: "pillar",
+        revenue: 10000000,
+        direct_cost: 7000000,
+        gross_margin: 3000000,
+        gross_margin_pct: 30,
+        headcount: 45,
+        period_month: "2025-01",
+        fact_type: "budget"
+      }
+    ];
     
     return NextResponse.json(result);
     

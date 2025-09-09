@@ -11,19 +11,27 @@ import {
   DollarSign,
   Layers,
   GitBranch,
-  Grid3x3,
-  Wrench
+  Grid3x3
 } from "lucide-react";
 
 const navigationCards = [
   {
-    title: "🆕 Workbench",
-    description: "Tree-based navigation with inline ownership editing - single page for everything",
-    href: "/workbench",
+    title: "Organization",
+    description: "Hierarchical org tree with headcount and financial rollups at each level",
+    href: "/org",
     status: "working",
-    icon: Wrench,
+    icon: Building2,
     color: "text-purple-600",
-    badge: "NEW"
+    badge: "TREE VIEW"
+  },
+  {
+    title: "Value Streams",
+    description: "Stream hierarchy with unit ownership and alignment rollups",
+    href: "/streams",
+    status: "working", 
+    icon: Layers,
+    color: "text-blue-600",
+    badge: "TREE VIEW"
   },
   {
     title: "Truth Table", 
@@ -32,14 +40,6 @@ const navigationCards = [
     status: "working",
     icon: Grid3x3,
     color: "text-green-600"
-  },
-  {
-    title: "Value Streams",
-    description: "Navigate through all 6 value streams and view unit details",
-    href: "/streams",
-    status: "working", 
-    icon: Layers,
-    color: "text-blue-600"
   },
   {
     title: "Evidence Log",
@@ -76,10 +76,10 @@ export default function HomePage() {
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Expose fiction vs reality, connect drivers to outcomes, and show dollars clearly.
         </p>
-        <div className="mt-6 p-4 bg-purple-50 rounded-lg max-w-2xl mx-auto">
-          <p className="text-sm font-medium text-purple-900">
-            💡 <strong>Pro Tip:</strong> Use the new Workbench for the best experience - 
-            it combines tree navigation with inline editing in a single interface
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg max-w-2xl mx-auto">
+          <p className="text-sm font-medium text-blue-900">
+            💡 <strong>Key Insight:</strong> Navigate hierarchical trees to see rollups and understand 
+            how metrics aggregate through organizational and stream structures
           </p>
         </div>
       </div>
@@ -132,21 +132,21 @@ export default function HomePage() {
         <h3 className="text-lg font-semibold mb-4">Quick Start Guide</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h4 className="font-medium mb-2">📊 For Ownership Management:</h4>
+            <h4 className="font-medium mb-2">🌳 For Hierarchical Navigation:</h4>
             <ol className="text-sm space-y-1 text-muted-foreground">
-              <li>1. Go to <strong>Workbench</strong> for tree-based editing</li>
-              <li>2. Or use <strong>Truth Table</strong> for grid view</li>
-              <li>3. Click any field to update observed ownership</li>
-              <li>4. Changes are logged in <strong>Evidence</strong></li>
+              <li>1. Start with <strong>Organization</strong> to see org tree with rollups</li>
+              <li>2. Use <strong>Streams</strong> to navigate value stream hierarchy</li>
+              <li>3. Expand/collapse nodes to see aggregations at each level</li>
+              <li>4. Click units to view ownership details inline</li>
             </ol>
           </div>
           <div>
-            <h4 className="font-medium mb-2">📈 For Analysis:</h4>
+            <h4 className="font-medium mb-2">📊 For Ownership & Analysis:</h4>
             <ol className="text-sm space-y-1 text-muted-foreground">
-              <li>1. Check <strong>KPIs</strong> for metrics status</li>
-              <li>2. View <strong>Finance</strong> for P&L analysis</li>
-              <li>3. Toggle between direct and allocated views</li>
-              <li>4. All data flows from the same source of truth</li>
+              <li>1. Use <strong>Truth Table</strong> for detailed ownership editing</li>
+              <li>2. Check <strong>Evidence</strong> for audit trail</li>
+              <li>3. View <strong>KPIs</strong> and <strong>Finance</strong> for metrics</li>
+              <li>4. All changes flow through the same hierarchies</li>
             </ol>
           </div>
         </div>

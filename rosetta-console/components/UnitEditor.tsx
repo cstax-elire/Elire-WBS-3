@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Pencil, Check, X } from "lucide-react";
+import { DropdownOption } from "@/types/database";
 
 interface UnitRow {
   unit_id: number;
@@ -29,13 +30,6 @@ interface UnitRow {
   status: string;
   evidence_count: number;
   last_evidence_at: string | null;
-}
-
-interface DropdownOption {
-  value: string;
-  label: string;
-  code: string;
-  depth?: number;
 }
 
 interface UnitEditorProps {
@@ -87,6 +81,7 @@ export function UnitEditor({ unit, onUpdate }: UnitEditorProps) {
           [`accountable_${field}_id`]: value,
           source: "UI",
           notes: `Updated ${field} via Workbench`,
+          idempotency_key: `${unit.unit_id}-${field}-${value}-${Math.floor(Date.now() / 60000)}`, // Round to minute
         }),
       });
 
@@ -100,6 +95,7 @@ export function UnitEditor({ unit, onUpdate }: UnitEditorProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workbench-units"] });
       queryClient.invalidateQueries({ queryKey: ["ownership-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["truth-data"] });
       setEditingField(null);
       onUpdate?.();
     },
@@ -156,7 +152,7 @@ export function UnitEditor({ unit, onUpdate }: UnitEditorProps) {
               <SelectContent>
                 <SelectItem value="">None</SelectItem>
                 {roleOptions?.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
+                  <SelectItem key={opt.value} value={opt.value.toString()}>
                     {opt.label}
                   </SelectItem>
                 ))}
@@ -178,7 +174,7 @@ export function UnitEditor({ unit, onUpdate }: UnitEditorProps) {
             }}
           >
             <span className="text-sm">
-              {unit.observed_role || <span className="text-muted-foreground">Not set</span>}
+              {unit.observed_role || <span className="text-muted-foreground italic">Click to set</span>}
             </span>
             <Pencil className="h-3 w-3 text-muted-foreground" />
           </div>
@@ -199,7 +195,7 @@ export function UnitEditor({ unit, onUpdate }: UnitEditorProps) {
               <SelectContent>
                 <SelectItem value="">None</SelectItem>
                 {orgOptions?.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
+                  <SelectItem key={opt.value} value={opt.value.toString()}>
                     {opt.label}
                   </SelectItem>
                 ))}
@@ -221,7 +217,7 @@ export function UnitEditor({ unit, onUpdate }: UnitEditorProps) {
             }}
           >
             <span className="text-sm">
-              {unit.observed_org || <span className="text-muted-foreground">Not set</span>}
+              {unit.observed_org || <span className="text-muted-foreground italic">Click to set</span>}
             </span>
             <Pencil className="h-3 w-3 text-muted-foreground" />
           </div>

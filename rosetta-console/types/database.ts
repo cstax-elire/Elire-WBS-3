@@ -32,7 +32,7 @@ export interface RosettaTruthRow {
   expected_org: string;
   observed_role: string;
   observed_org: string;
-  status: 'Aligned' | 'Role Mismatch' | 'Org Mismatch' | 'Not Observed' | 'Incomplete Expected';
+  status: 'Aligned' | 'Misattributed' | 'Not Observed' | 'Incomplete Expected';
   evidence_count: number;
   last_evidence_at?: Date;
   total_count?: number; // For paginated results
@@ -47,7 +47,7 @@ export interface MisattributionRow {
   expected_org: string;
   observed_role: string;
   observed_org: string;
-  attribution_status: 'Not Observed' | 'Incomplete Expected' | 'Role Mismatch' | 'Org Mismatch' | 'Aligned';
+  attribution_status: 'Not Observed' | 'Incomplete Expected' | 'Misattributed' | 'Aligned';
   is_misattributed: boolean;
   observed_as_of?: Date;
   observation_source?: string;

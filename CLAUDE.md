@@ -71,21 +71,49 @@ SELECT * FROM v_misattribution_delta WHERE is_misattributed = true;
 
 ## UI Implementation Approach
 
-The UI follows a narrative-first design with these pages:
+### Critical Architecture Principle: DATABASE-DRIVEN, NOT UI-DRIVEN
 
-1. **/org** - Organizational tree with headcount and financials
-2. **/streams** - Value stream navigation and unit details
-3. **/truth** - Expected vs Observed ownership grid
-4. **/evidence** - Audit trail and proof logging
-5. **/kpis** - Driver and outcome metrics management
-6. **/finance** - Direct vs Allocated P&L views
+The UI must be a thin visualization layer over database views. The database structure IS the solution:
+- **All rollups calculated in SQL views**, never in JavaScript
+- **Hierarchical relationships defined in database**, not frontend
+- **API endpoints are simple passthroughs** to database views
+- **Editing happens at atomic unit level**, rollups cascade naturally
 
-API endpoints follow RESTful patterns:
-- POST `/api/observed` - Set observed ownership (append-only)
+### Core Pages (Data-Driven Trees)
+
+1. **/org** - Organizational tree with ownership alignment rollups
+   - Shows: Pillars → COEs → Practices with alignment metrics
+   - Data from: `v_org_tree_with_ownership` (enhanced view)
+   - Displays: Headcount, Revenue, Margin, Aligned/Misattributed/Not Observed counts
+
+2. **/streams** - Value stream tree with editable unit ownership
+   - Shows: Streams → Sub-streams → Atomic Units
+   - Data from: `v_stream_tree_with_ownership`
+   - Features: Inline editing with dropdowns for org/role selection
+   - Real-time rollups after edits
+
+3. **/truth** - Paginated truth table (expected vs observed)
+   - Data from: `v_rosetta_truth`
+   - Features: Filtering, pagination, bulk operations
+
+4. **/evidence** - Audit trail
+5. **/kpis** - Metrics management  
+6. **/finance** - P&L views
+
+### API Endpoints
+
+#### Tree/Hierarchy Endpoints (READ-ONLY from views)
+- GET `/api/tree/org-with-ownership` - Org tree with ownership stats
+- GET `/api/tree/streams-with-ownership` - Stream tree with ownership stats
+- GET `/api/streams/[code]/units` - Units for a specific stream
+
+#### Data Modification (WRITE to tables, triggers update views)
+- POST `/api/observed-ownership` - Set observed ownership (append-only)
 - POST `/api/evidence` - Log evidence entries
-- POST `/api/kpi` - Record KPI measurements
-- POST `/api/personfact` - Update person-level facts
-- POST `/api/financial` - Insert financial facts
+
+#### Option Lists for Dropdowns
+- GET `/api/options/org` - Organization dropdown options
+- GET `/api/options/role` - Role dropdown options
 
 ## Important Notes
 
@@ -113,11 +141,32 @@ API endpoints follow RESTful patterns:
 - Current SPI-derived KPIs maintained for continuity
 - Operational KPIs added for true driver management
 
+## Key Implementation Insights
+
+### The Rosetta Stone Vision
+The system connects everything through atomic units - the smallest indivisible work elements. These units:
+- Belong to exactly one value stream (WIN, DELIVER, COLLECT, etc.)
+- Have expected ownership (who SHOULD own it per org design)
+- Have observed ownership (who ACTUALLY owns it in reality)
+- Roll up naturally through both org and stream hierarchies
+
+### WBS (Work Breakdown Structure) Principles
+- **Strict hierarchy**: Every element has exactly one parent
+- **Complete decomposition**: Work is fully broken down to atomic level
+- **Natural aggregation**: Metrics roll up through the hierarchy automatically
+- **Data-driven structure**: The database schema defines the business logic
+
+### Why Trees, Not Tables
+- Tables show flat data; trees show relationships and cascading impacts
+- Misattribution at the atomic level cascades up through org hierarchy
+- Users can see HOW ownership gaps aggregate at each level
+- Editing at leaf level (atomic units) naturally updates all rollups
+
 ## Testing Approach
 
 Key test scenarios:
 1. **Misattribution signal**: Set observed owner different from expected, verify status changes
 2. **Evidence trail**: Confirm all updates create evidence_log entries
 3. **Financial rollups**: Verify practice → COE → pillar aggregations
-4. **KPI cascade**: Update driver KPI, verify evidence creation
-5. **SG&A allocation**: Toggle between direct and allocated views, confirm reconciliation
+4. **Ownership rollups**: Edit unit ownership, verify tree rollups update
+5. **Cross-hierarchy views**: Filter org tree by stream, stream tree by org

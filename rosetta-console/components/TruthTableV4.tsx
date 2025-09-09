@@ -57,7 +57,8 @@ function OwnershipCell({
           unit_id: unitId,
           [`accountable_${field}_id`]: newValue,
           source: 'UI',
-          notes: `Updated ${field} via Truth page`
+          notes: `Updated ${field} via Truth page`,
+          idempotency_key: `${unitId}-${field}-${newValue}-${Math.floor(Date.now() / 60000)}` // Round to minute
         })
       });
       
@@ -71,6 +72,8 @@ function OwnershipCell({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['truth-data'] });
       queryClient.invalidateQueries({ queryKey: ['ownership-summary'] });
+      queryClient.invalidateQueries({ queryKey: ['stream-units'] });
+      queryClient.invalidateQueries({ queryKey: ['workbench-units'] });
       setIsEditing(false);
     }
   });

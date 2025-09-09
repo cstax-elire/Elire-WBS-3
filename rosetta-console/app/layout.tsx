@@ -9,9 +9,9 @@ export const metadata = {
 
 const navigation = [
   { name: 'Dashboard', href: '/' },
-  { name: '🆕 Workbench', href: '/workbench' },
-  { name: 'Truth', href: '/truth' },
+  { name: 'Organization', href: '/org' },
   { name: 'Streams', href: '/streams' },
+  { name: 'Truth', href: '/truth' },
   { name: 'Evidence', href: '/evidence' },
   { name: 'KPIs', href: '/kpis' },
   { name: 'Finance', href: '/finance' },
