@@ -1,0 +1,47 @@
+# Repomix Configuration
+
+output:
+  filePath: elire-ops-database.md
+  style: markdown
+  removeComments: false
+  showLineNumbers: false
+
+include:
+  # Documentation
+  - "elire_ops_1/README.md"
+  - "elire_ops_1/docs/*.md"
+  
+  # Schema files
+  - "elire_ops_1/01-schema/*.sql"
+  
+  # Seed data files
+  - "elire_ops_1/02-seed/*.sql"
+  
+  # View definitions
+  - "elire_ops_1/03-views/*.sql"
+  
+  # Scripts
+  - "elire_ops_1/scripts/*.sh"
+  
+  # Project documentation
+  - "CLAUDE.md"
+
+ignore:
+  # Old numbered files (keeping for reference)
+  - "elire_ops_1/[0-9]-*.sql"
+  - "elire_ops_1/10-*.sql"
+  - "elire_ops_1/11-*.sql"
+  
+  # Temporary and backup files
+  - "**/*.bak"
+  - "**/*.tmp"
+  - "**/backup_*.sql"
+  
+  # UI-specific files (not reorganized yet)
+  - "UI-Design/"
+  - "*.md"
+  
+  # Git and system files
+  - ".git/"
+  - ".DS_Store"
+  - "node_modules/"

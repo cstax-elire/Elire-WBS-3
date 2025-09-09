@@ -1,6 +1,9 @@
-# DesignDecisions.md — `elire_ops_1`
+# Original Design Decisions — `elire_ops_1`
 
-*A companion to the SQL build+seed that explains assumptions, mappings, allocations, and how to evolve the dataset as you replace placeholders with actuals.*
+**Note**: This document preserves the original design rationale from the initial database build. 
+For current implementation details, see `database-design.md` and `table-reference.md`.
+
+*Original companion to the SQL build+seed that explains assumptions, mappings, allocations, and how to evolve the dataset as you replace placeholders with actuals.*
 
 ------
 
